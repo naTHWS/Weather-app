@@ -1,0 +1,3 @@
+Wetteranalyse mit historischen Daten
+
+Hintergrund: Wetterdaten sind ein idealer Einstieg in die Datenanalyse, da sie strukturiert, gut dokumentiert und leicht verstaendlich sind. Sie koennen Einsichten ueber Klimamuster und Trends liefern. Ziel: Auswertung und Visualisierung von Wetterdaten zur Identifikation grundlegender Trends und saisonaler Muster. Datenquellen: Deutscher Wetterdienst (https://opendata.dwd.de) oder Kaggle-Weather-Dataset. Analyse und Darstellung mit Python. Sorgfaeltige Dokumentation aller Schritte.

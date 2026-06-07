@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 1;
+}
+
+.overlay {
+    position: relative;
+    z-index: 2;
+    pointer-events: none; /* Klicks gehen durch das Overlay zur Map */
+    height: 100vh;
+    padding: 20px;
+}
+
+/* Glassmorphism Effekt */
+.glass-panel, .glass-menu {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    pointer-events: auto; /* Re-enable clicks for UI elements */
+}
+
+/* Top Menu */
+.glass-menu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    margin-bottom: 20px;
+}
+
+.nav-links span {
+    margin-left: 20px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.nav-links span:hover {
+    opacity: 1;
+}
+
+/* Side Panels */
+.side-panel {
+    position: absolute;
+    top: 100px;
+    width: 350px;
+    padding: 20px;
+}
+
+.left {
+    left: 20px;
+}
+
+.right {
+    right: 20px;
+}
+
+h3 {
+    margin-bottom: 15px;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}

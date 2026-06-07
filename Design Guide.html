@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Weather — Design Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Tokens ---------- */
+  :root{
+    /* surfaces — warm-neutral near-blacks, abgestimmt auf die Icons */
+    --bg-0:      #0B0B0D;   /* page background */
+    --bg-1:      #121215;   /* surface — cards */
+    --bg-2:      #191920;   /* elevated — inputs, hover */
+    --bg-3:      #23232B;   /* highest — popovers */
+
+    /* borders & dividers */
+    --line-1:    #1E1E25;
+    --line-2:    #2A2A33;
+
+    /* text */
+    --tx-1:      #F2F2F4;   /* primary */
+    --tx-2:      #B7B7BF;   /* secondary */
+    --tx-3:      #7A7A85;   /* tertiary / labels */
+    --tx-4:      #4A4A52;   /* disabled / hint */
+
+    /* icon two-tone (matches deine Icons) */
+    --ic-fg:     #E8E8EC;
+    --ic-bg:     #6E6E78;
+
+    /* single accent — gedämpftes slate-blue */
+    --ac:        oklch(0.72 0.07 235);
+    --ac-soft:   oklch(0.72 0.07 235 / 0.16);
+    --ac-line:   oklch(0.72 0.07 235 / 0.40);
+
+    /* status (dezent, nicht knallig — alle gleiche chroma) */
+    --good:      oklch(0.74 0.07 165);
+    --warn:      oklch(0.78 0.07  75);
+    --bad:       oklch(0.70 0.07  25);
+
+    /* type */
+    --ff-sans: 'Inter', system-ui, sans-serif;
+    --ff-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    /* radii */
+    --r-sm: 8px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-pill: 999px;
+
+    /* shadows — sehr dezent, nur Höhe vermitteln */
+    --sh-1: 0 1px 0 rgba(255,255,255,.02) inset, 0 1px 2px rgba(0,0,0,.4);
+    --sh-2: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.45);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg-0); color:var(--tx-1); font-family:var(--ff-sans); -webkit-font-smoothing:antialiased; }
+  body{ font-size:15px; line-height:1.55; font-weight:400; letter-spacing:-0.005em; }
+
+  a{ color:var(--ac); text-decoration:none; }
+
+  /* page shell */
+  .page{ max-width:1240px; margin:0 auto; padding:72px 56px 120px; }
+
+  /* ---------- Type scale (in-use) ---------- */
+  .display{ font-size:56px; line-height:1.05; letter-spacing:-0.025em; font-weight:600; }
+  .h1{ font-size:32px; line-height:1.15; letter-spacing:-0.02em; font-weight:600; }
+  .h2{ font-size:22px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; }
+  .h3{ font-size:16px; line-height:1.3; letter-spacing:-0.01em; font-weight:600; }
+  .body{ font-size:15px; line-height:1.55; color:var(--tx-2); }
+  .label{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx-3); font-weight:500; }
+  .mono{ font-family:var(--ff-mono); font-size:12px; color:var(--tx-3); }
+
+  /* ---------- Section frame ---------- */
+  section{ margin-top:88px; }
+  section > header{ display:flex; align-items:flex-end; justify-content:space-between; gap:32px; padding-bottom:20px; border-bottom:1px solid var(--line-1); margin-bottom:32px; }
+  section > header h2{ margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:var(--tx-3); font-weight:500; }
+  section > header .sec-num{ font-family:var(--ff-mono); color:var(--tx-4); font-size:12px; letter-spacing:.05em; }
+  section > header .sec-desc{ color:var(--tx-2); max-width:520px; font-size:14px; text-align:right; }
+
+  /* ---------- Cover ---------- */
+  .cover{ display:grid; grid-template-columns: 1.2fr 1fr; gap:48px; align-items:end; padding-bottom:48px; border-bottom:1px solid var(--line-1); }
+  .cover .crumb{ display:flex; gap:14px; align-items:center; margin-bottom:24px; }
+  .cover .crumb .dot{ width:8px; height:8px; border-radius:50%; background:var(--ac); box-shadow:0 0 0 4px var(--ac-soft); }
+  .cover h1{ margin:0 0 16px; font-size:64px; line-height:1; letter-spacing:-0.035em; font-weight:600; }
+  .cover h1 em{ font-style:normal; color:var(--tx-3); font-weight:300; }
+  .cover p{ margin:0; color:var(--tx-2); max-width:480px; font-size:16px; }
+  .cover .meta{ display:grid; grid-template-columns:repeat(2,1fr); gap:24px; border:1px solid var(--line-1); border-radius:var(--r-md); padding:24px; background:var(--bg-1); }
+  .cover .meta dt{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx-3); font-weight:500; margin-bottom:6px; }
+  .cover .meta dd{ margin:0; color:var(--tx-1); font-family:var(--ff-mono); font-size:13px; }
+
+  /* ---------- Principles ---------- */
+  .principles{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .principle{ border:1px solid var(--line-1); border-radius:var(--r-md); padding:24px; background:var(--bg-1); min-height:180px; display:flex; flex-direction:column; }
+  .principle .num{ font-family:var(--ff-mono); color:var(--tx-4); font-size:12px; margin-bottom:24px; }
+  .principle h3{ margin:0 0 8px; font-size:16px; font-weight:600; letter-spacing:-0.01em; }
+  .principle p{ margin:0; color:var(--tx-2); font-size:13.5px; line-height:1.5; }
+
+  /* ---------- Color ---------- */
+  .swatch-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  .swatch{ border:1px solid var(--line-1); border-radius:var(--r-md); overflow:hidden; background:var(--bg-1); }
+  .swatch .fill{ display:block; height:120px; width:100%; border-bottom:1px solid var(--line-1); border-radius:0; padding:0; }
+  .swatch .meta{ padding:14px 14px 16px; }
+  .swatch .meta .name{ font-size:13px; font-weight:500; color:var(--tx-1); margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+  .swatch .meta .name span{ color:var(--tx-4); font-family:var(--ff-mono); font-size:11px; font-weight:400; }
+  .swatch .meta .hex{ font-family:var(--ff-mono); font-size:11px; color:var(--tx-3); }
+
+  .palette-row{ display:grid; grid-template-columns: 220px 1fr; gap:32px; margin-bottom:32px; align-items:start; }
+  .palette-row h3{ margin:0 0 6px; font-size:15px; font-weight:600; }
+  .palette-row p{ margin:0; color:var(--tx-3); font-size:13px; line-height:1.5; }
+
+  .gray-ramp{ display:flex; border:1px solid var(--line-1); border-radius:var(--r-md); overflow:hidden; height:80px; }
+  .gray-ramp > div{ flex:1; display:flex; align-items:flex-end; justify-content:center; padding-bottom:10px; font-family:var(--ff-mono); font-size:10px; }
+
+  /* ---------- Type spec ---------- */
+  .type-row{ display:grid; grid-template-columns: 220px 1fr 200px; gap:32px; padding:24px 0; border-bottom:1px solid var(--line-1); align-items:center; }
+  .type-row:last-child{ border-bottom:none; }
+  .type-row .name{ display:flex; flex-direction:column; gap:4px; }
+  .type-row .name .lbl{ font-size:14px; font-weight:500; }
+  .type-row .name .sub{ font-size:11px; color:var(--tx-3); font-family:var(--ff-mono); }
+  .type-row .spec{ font-family:var(--ff-mono); font-size:11px; color:var(--tx-3); text-align:right; line-height:1.7; }
+
+  /* ---------- Icons ---------- */
+  .icon-grid{ display:grid; grid-template-columns:repeat(8,1fr); gap:8px; border:1px solid var(--line-1); border-radius:var(--r-md); padding:24px; background:var(--bg-1); }
+  .icon-cell{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:var(--r-sm); transition:background .15s; }
+  .icon-cell:hover{ background:var(--bg-2); }
+  .icon-cell svg{ width:36px; height:36px; }
+
+  /* icon two-tone style — matches deine vorlagen */
+  .ic-fg{ fill:var(--ic-fg); }
+  .ic-bg{ fill:var(--ic-bg); }
+
+  .icon-spec{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
+  .icon-spec .box{ border:1px solid var(--line-1); border-radius:var(--r-md); padding:20px; background:var(--bg-1); }
+  .icon-spec .box .label{ margin-bottom:12px; }
+  .icon-spec .box .v{ font-family:var(--ff-mono); font-size:13px; color:var(--tx-1); }
+
+  /* ---------- Components ---------- */
+  .comp-grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+  .comp{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:24px; }
+  .comp .lbl{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--tx-3); font-weight:500; margin-bottom:18px; display:flex; justify-content:space-between; }
+  .comp .lbl .meta{ color:var(--tx-4); font-family:var(--ff-mono); letter-spacing:.05em; text-transform:none; }
+
+  .span-3{ grid-column: span 3; }
+  .span-4{ grid-column: span 4; }
+  .span-6{ grid-column: span 6; }
+  .span-8{ grid-column: span 8; }
+  .span-12{ grid-column: span 12; }
+
+  /* buttons */
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:var(--r-pill); font:500 13px/1 var(--ff-sans); border:1px solid transparent; cursor:pointer; transition:all .15s; letter-spacing:-0.005em; }
+  .btn-primary{ background:var(--tx-1); color:var(--bg-0); }
+  .btn-primary:hover{ background:#fff; }
+  .btn-secondary{ background:var(--bg-2); color:var(--tx-1); border-color:var(--line-2); }
+  .btn-secondary:hover{ background:var(--bg-3); }
+  .btn-ghost{ background:transparent; color:var(--tx-2); }
+  .btn-ghost:hover{ color:var(--tx-1); background:var(--bg-2); }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  /* segmented */
+  .seg{ display:inline-flex; background:var(--bg-2); border:1px solid var(--line-2); border-radius:var(--r-pill); padding:3px; }
+  .seg button{ background:transparent; border:none; color:var(--tx-3); padding:7px 16px; border-radius:var(--r-pill); font:500 12.5px/1 var(--ff-sans); cursor:pointer; }
+  .seg button.on{ background:var(--bg-0); color:var(--tx-1); }
+
+  /* input */
+  .input{ display:flex; align-items:center; gap:10px; background:var(--bg-2); border:1px solid var(--line-2); border-radius:var(--r-pill); padding:10px 16px; color:var(--tx-3); font-size:13px; }
+  .input svg{ width:14px; height:14px; flex-shrink:0; }
+  .input input{ background:none; border:none; outline:none; color:var(--tx-1); font:400 13px var(--ff-sans); flex:1; }
+  .input input::placeholder{ color:var(--tx-3); }
+
+  /* chip */
+  .chip{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:var(--r-pill); background:var(--bg-2); border:1px solid var(--line-2); color:var(--tx-2); font-size:11.5px; font-weight:500; }
+  .chip.on{ background:var(--ac-soft); border-color:var(--ac-line); color:var(--ac); }
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* weather card */
+  .wcard{ background:linear-gradient(180deg, var(--bg-2), var(--bg-1)); border:1px solid var(--line-2); border-radius:var(--r-md); padding:22px; position:relative; overflow:hidden; }
+  .wcard .top{ display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--tx-3); margin-bottom:18px; }
+  .wcard .temp{ font-size:48px; font-weight:600; letter-spacing:-0.04em; line-height:1; display:flex; align-items:flex-start; }
+  .wcard .temp .deg{ font-size:20px; color:var(--tx-3); margin-top:6px; margin-left:2px; }
+  .wcard .stats{ display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; margin-top:18px; }
+  .wcard .stats .row{ display:flex; justify-content:space-between; font-size:11.5px; }
+  .wcard .stats .row .k{ color:var(--tx-3); }
+  .wcard .stats .row .v{ color:var(--tx-1); font-weight:500; }
+  .wcard .ic{ position:absolute; right:14px; top:30px; }
+
+  /* day-mini */
+  .day{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:18px 14px; text-align:center; }
+  .day .d{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx-3); margin-bottom:14px; }
+  .day .ic{ display:flex; justify-content:center; margin-bottom:14px; }
+  .day .t{ font-size:22px; font-weight:600; letter-spacing:-0.02em; }
+  .day .t .deg{ color:var(--tx-3); font-size:14px; }
+  .day-row{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+
+  /* metric card */
+  .metric{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:22px; }
+  .metric .head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  .metric .head .t{ font-size:14px; font-weight:600; }
+  .metric .head .sub{ font-size:11px; color:var(--tx-3); font-family:var(--ff-mono); }
+  .metric .v{ font-size:32px; font-weight:600; letter-spacing:-0.025em; line-height:1; }
+  .metric .v .u{ font-size:14px; color:var(--tx-3); font-weight:400; margin-left:4px; }
+  .metric .foot{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:11.5px; color:var(--tx-3); }
+
+  /* bars (wind) */
+  .bars{ display:flex; align-items:flex-end; gap:2px; height:60px; margin-top:18px; }
+  .bars span{ flex:1; background:var(--ic-bg); border-radius:2px 2px 0 0; opacity:.55; }
+  .bars span.hi{ background:var(--tx-1); opacity:.95; }
+
+  /* gauge */
+  .gauge{ position:relative; height:80px; margin-top:8px; display:flex; align-items:flex-end; justify-content:center; }
+  .gauge svg{ width:160px; height:90px; }
+
+  /* spacing scale */
+  .scale-row{ display:flex; align-items:center; gap:24px; padding:14px 0; border-bottom:1px solid var(--line-1); }
+  .scale-row:last-child{ border-bottom:none; }
+  .scale-row .lbl{ font-family:var(--ff-mono); font-size:12px; color:var(--tx-3); width:80px; }
+  .scale-row .px{ font-family:var(--ff-mono); font-size:12px; color:var(--tx-1); width:60px; }
+  .scale-row .vis{ height:18px; background:var(--ac-soft); border-left:2px solid var(--ac); }
+
+  /* radius demo */
+  .radius-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .radius-row .box{ background:var(--bg-1); border:1px solid var(--line-1); padding:24px; height:100px; display:flex; flex-direction:column; justify-content:space-between; }
+  .radius-row .box .px{ font-family:var(--ff-mono); font-size:11px; color:var(--tx-3); }
+  .radius-row .box .name{ font-size:12px; color:var(--tx-2); }
+
+  /* dos & donts */
+  .rules{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .rule{ border:1px solid var(--line-1); border-radius:var(--r-md); padding:22px; background:var(--bg-1); }
+  .rule .tag{ display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:500; padding:4px 10px; border-radius:var(--r-pill); margin-bottom:14px; }
+  .rule.do .tag{ background:rgba(140,200,170,.10); color:var(--good); }
+  .rule.dont .tag{ background:rgba(220,150,140,.10); color:var(--bad); }
+  .rule h3{ margin:0 0 8px; font-size:15px; font-weight:600; }
+  .rule p{ margin:0; color:var(--tx-2); font-size:13px; line-height:1.55; }
+  .rule .demo{ margin-top:16px; padding:18px; background:var(--bg-0); border-radius:var(--r-sm); border:1px solid var(--line-1); }
+
+  /* layout/grid demo */
+  .grid-demo{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:20px; position:relative; }
+  .grid-demo .frame{ display:grid; grid-template-columns: 1.4fr 1fr; gap:14px; }
+  .grid-demo .col{ display:flex; flex-direction:column; gap:14px; }
+  .grid-demo .blk{ background:var(--bg-2); border:1px dashed var(--line-2); border-radius:var(--r-sm); padding:14px; color:var(--tx-3); font-size:11px; font-family:var(--ff-mono); }
+  .grid-demo .blk.tall{ height:160px; }
+  .grid-demo .blk.med{ height:110px; }
+  .grid-demo .blk.short{ height:70px; }
+  .grid-demo .blk.lead{ background:linear-gradient(180deg, var(--ac-soft), transparent); border-color:var(--ac-line); color:var(--ac); }
+
+  /* footer */
+  footer{ margin-top:120px; padding-top:32px; border-top:1px solid var(--line-1); display:flex; justify-content:space-between; color:var(--tx-3); font-size:12px; font-family:var(--ff-mono); }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <!-- ============================================================
+       COVER
+       ============================================================ -->
+  <header class="cover">
+    <div>
+      <div class="crumb">
+        <span class="dot"></span>
+        <span class="label">Design Guide · v0.1</span>
+      </div>
+      <h1>Weather<em>.</em><br>Visual System</h1>
+      <p>Ein ruhiges, monochromes Interface auf Basis der vorhandenen Icon-Sprache. Wenig Farbe, viel Hierarchie. Daten stehen im Vordergrund — Dekoration tritt zurück.</p>
+    </div>
+    <dl class="meta">
+      <div><dt>Modus</dt><dd>Dark — primary</dd></div>
+      <div><dt>Schrift</dt><dd>Inter / JetBrains Mono</dd></div>
+      <div><dt>Akzent</dt><dd>oklch(0.72 0.07 235)</dd></div>
+      <div><dt>Stand</dt><dd>26.05.2026</dd></div>
+    </dl>
+  </header>
+
+  <!-- ============================================================
+       01 PRINCIPLES
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">01</div>
+        <h2>Prinzipien</h2>
+      </div>
+      <p class="sec-desc">Vier Grundsätze, die jede Designentscheidung in diesem System leiten.</p>
+    </header>
+
+    <div class="principles">
+      <div class="principle">
+        <div class="num">P/01</div>
+        <h3>Ruhig vor laut</h3>
+        <p>Dunkle, neutrale Flächen. Sättigung ist ein knappes Gut — sie markiert nur, was wirklich Aufmerksamkeit verdient.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P/02</div>
+        <h3>Daten zuerst</h3>
+        <p>Temperatur, Niederschlag, Wind — die Zahl ist das Hero-Element. Layout, Typo und Kontrast dienen ihrer Lesbarkeit.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P/03</div>
+        <h3>Eine Stimme</h3>
+        <p>Icons, Typografie und Komponenten teilen denselben monochromen Ton. Keine konkurrierenden Stile auf einer Fläche.</p>
+      </div>
+      <div class="principle">
+        <div class="num">P/04</div>
+        <h3>Hierarchie durch Helligkeit</h3>
+        <p>Statt Farbe trennen vier abgestufte Grautöne Vordergrund, Karte, Eingabe und Popover voneinander.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       02 COLOR
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">02</div>
+        <h2>Farbe</h2>
+      </div>
+      <p class="sec-desc">Das System basiert auf einer warmen Neutralskala. Akzentfarbe wird sparsam und nur funktional eingesetzt.</p>
+    </header>
+
+    <!-- surfaces -->
+    <div class="palette-row">
+      <div>
+        <h3>Flächen</h3>
+        <p>Vier abgestufte Hintergrundtöne. Tiefer = weiter hinten in der Z-Achse.</p>
+      </div>
+      <div class="swatch-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="swatch">
+          <div class="fill" style="background:#0B0B0D"></div>
+          <div class="meta"><div class="name">bg-0 <span>page</span></div><div class="hex">#0B0B0D</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#121215"></div>
+          <div class="meta"><div class="name">bg-1 <span>card</span></div><div class="hex">#121215</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#191920"></div>
+          <div class="meta"><div class="name">bg-2 <span>input / hover</span></div><div class="hex">#191920</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#23232B"></div>
+          <div class="meta"><div class="name">bg-3 <span>popover</span></div><div class="hex">#23232B</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- text -->
+    <div class="palette-row">
+      <div>
+        <h3>Text</h3>
+        <p>Vierstufige Hierarchie. Auf dunklen Flächen niemals reinweiß — leicht entsättigt für angenehmeres Lesen.</p>
+      </div>
+      <div class="swatch-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="swatch">
+          <div class="fill" style="background:#F2F2F4; height:80px; display:flex; align-items:center; justify-content:center; color:#0B0B0D; font-weight:600; font-size:24px;">Aa</div>
+          <div class="meta"><div class="name">tx-1 <span>primary</span></div><div class="hex">#F2F2F4</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#0B0B0D; height:80px; display:flex; align-items:center; justify-content:center; color:#B7B7BF; font-weight:500; font-size:24px;">Aa</div>
+          <div class="meta"><div class="name">tx-2 <span>secondary</span></div><div class="hex">#B7B7BF</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#0B0B0D; height:80px; display:flex; align-items:center; justify-content:center; color:#7A7A85; font-weight:500; font-size:24px;">Aa</div>
+          <div class="meta"><div class="name">tx-3 <span>tertiary</span></div><div class="hex">#7A7A85</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:#0B0B0D; height:80px; display:flex; align-items:center; justify-content:center; color:#4A4A52; font-weight:500; font-size:24px;">Aa</div>
+          <div class="meta"><div class="name">tx-4 <span>disabled</span></div><div class="hex">#4A4A52</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- accent + status -->
+    <div class="palette-row">
+      <div>
+        <h3>Akzent &amp; Status</h3>
+        <p>Ein einziger Akzentton (gedämpftes Slate-Blue) für Auswahl, Chart-Linien und Hervorhebungen. Status-Farben gleicher Sättigung — niemals neon.</p>
+      </div>
+      <div class="swatch-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="swatch">
+          <div class="fill" style="background:oklch(0.72 0.07 235)"></div>
+          <div class="meta"><div class="name">ac <span>accent</span></div><div class="hex">oklch(.72 .07 235)</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:oklch(0.74 0.07 165)"></div>
+          <div class="meta"><div class="name">good <span>positive</span></div><div class="hex">oklch(.74 .07 165)</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:oklch(0.78 0.07 75)"></div>
+          <div class="meta"><div class="name">warn <span>caution</span></div><div class="hex">oklch(.78 .07 75)</div></div>
+        </div>
+        <div class="swatch">
+          <div class="fill" style="background:oklch(0.70 0.07 25)"></div>
+          <div class="meta"><div class="name">bad <span>warning</span></div><div class="hex">oklch(.70 .07 25)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- gray ramp -->
+    <div class="palette-row">
+      <div>
+        <h3>Grau-Verlauf</h3>
+        <p>Referenzskala — Icons und Datenvisualisierungen ziehen ihre Töne hier heraus.</p>
+      </div>
+      <div class="gray-ramp">
+        <div style="background:#0B0B0D; color:#7A7A85">050</div>
+        <div style="background:#121215; color:#7A7A85">100</div>
+        <div style="background:#191920; color:#7A7A85">200</div>
+        <div style="background:#23232B; color:#9A9AA5">300</div>
+        <div style="background:#33333D; color:#B7B7BF">400</div>
+        <div style="background:#4A4A52; color:#E8E8EC">500</div>
+        <div style="background:#6E6E78; color:#F2F2F4">600</div>
+        <div style="background:#9A9AA5; color:#0B0B0D">700</div>
+        <div style="background:#B7B7BF; color:#0B0B0D">800</div>
+        <div style="background:#F2F2F4; color:#0B0B0D">900</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       03 TYPOGRAPHY
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">03</div>
+        <h2>Typografie</h2>
+      </div>
+      <p class="sec-desc">Inter für Interface &amp; Daten, JetBrains Mono für technische Werte und Zeitstempel.</p>
+    </header>
+
+    <div style="background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:32px 40px;">
+      <div class="type-row">
+        <div class="name"><span class="lbl">Display</span><span class="sub">Inter / 600</span></div>
+        <div class="display">16°</div>
+        <div class="spec">56 / 60<br>tracking −0.025em<br>weight 600</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">H1 — Page</span><span class="sub">Inter / 600</span></div>
+        <div class="h1">Heute in Berlin</div>
+        <div class="spec">32 / 36<br>tracking −0.02em<br>weight 600</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">H2 — Section</span><span class="sub">Inter / 600</span></div>
+        <div class="h2">7-Tage-Vorhersage</div>
+        <div class="spec">22 / 26<br>tracking −0.015em<br>weight 600</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">H3 — Card</span><span class="sub">Inter / 600</span></div>
+        <div class="h3">Windgeschwindigkeit</div>
+        <div class="spec">16 / 20<br>tracking −0.01em<br>weight 600</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">Body</span><span class="sub">Inter / 400</span></div>
+        <div class="body">Aktuell leichter Niederschlag, gefühlt 14°. Im Verlauf des Tages aufklarend.</div>
+        <div class="spec">15 / 23<br>tracking 0<br>weight 400</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">Label</span><span class="sub">Inter / 500 caps</span></div>
+        <div class="label">Niederschlagswahrscheinlichkeit</div>
+        <div class="spec">11 / 14<br>tracking 0.12em<br>uppercase</div>
+      </div>
+      <div class="type-row">
+        <div class="name"><span class="lbl">Mono</span><span class="sub">JetBrains Mono / 400</span></div>
+        <div class="mono">06:24 → 20:48 · UV 5.5 · hPa 1013</div>
+        <div class="spec">12 / 18<br>tracking 0<br>weight 400</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       04 ICONS
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">04</div>
+        <h2>Icon-System</h2>
+      </div>
+      <p class="sec-desc">Two-tone, gefüllt-monochrom. Zwei Grautöne kodieren Vorder- und Hintergrundebene desselben Symbols.</p>
+    </header>
+
+    <div class="icon-grid">
+      <!-- 1: thunder -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1.2-15.9 11 11 0 0 1 21.3 3.4A7 7 0 0 1 35 31H14Z"/><path class="ic-fg" d="M25 18 19 28h5l-2 8 7-11h-5l1-7Z"/></svg></div>
+      <!-- 2: snow shower -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1.2-15.9 11 11 0 0 1 21.3 3.4A7 7 0 0 1 35 31H14Z"/><circle class="ic-fg" cx="18" cy="38" r="1.5"/><circle class="ic-fg" cx="24" cy="40" r="1.5"/><circle class="ic-fg" cx="30" cy="38" r="1.5"/><circle class="ic-fg" cx="21" cy="42" r="1.5"/><circle class="ic-fg" cx="27" cy="42" r="1.5"/></svg></div>
+      <!-- 3: rain -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1.2-15.9 11 11 0 0 1 21.3 3.4A7 7 0 0 1 35 31H14Z"/><path class="ic-fg" d="M20 34v6M26 34v6M32 34v6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none" style="color:#E8E8EC"/></svg></div>
+      <!-- 4: no-cloud -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-fg" d="M10 38 38 10" stroke="#E8E8EC" stroke-width="2.5" stroke-linecap="round" fill="none"/><path class="ic-bg" d="M14 30a8 8 0 0 1 1.2-15.9 11 11 0 0 1 21.3 3.4A7 7 0 0 1 35 31H14Z" opacity=".7"/></svg></div>
+      <!-- 5: snowflake -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1.2-15.9 11 11 0 0 1 21.3 3.4A7 7 0 0 1 35 31H14Z"/><path class="ic-fg" d="M24 33v8M20 37l4 4 4-4M28 41" stroke="#E8E8EC" stroke-width="2" stroke-linecap="round" fill="none"/><circle class="ic-fg" cx="24" cy="38" r="2"/></svg></div>
+      <!-- 6: moon -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><circle class="ic-bg" cx="24" cy="24" r="14"/><path class="ic-fg" d="M28 10a14 14 0 0 0 0 28 14 14 0 0 1 0-28Z"/></svg></div>
+      <!-- 7: humidity waves -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-fg" d="M8 22c4-3 7-3 11 0s7 3 11 0M8 30c4-3 7-3 11 0" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" fill="none"/><path class="ic-bg" d="M34 24c0 4-3 7-6 7s-6-3-6-7c0-3 3-7 6-10 3 3 6 7 6 10Z"/></svg></div>
+      <!-- 8: moon cloud -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M26 12c-3 0-6 2-7 5a8 8 0 0 0 7 11 9 9 0 0 0 0-18 6 6 0 0 1 0 2Z"/><path class="ic-fg" d="M14 36a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H14Z"/></svg></div>
+      <!-- 9: night rain -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M26 10c-3 0-6 2-7 5"/><path class="ic-bg" d="M14 28a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H14Z"/><path d="M18 32v6M24 32v6M30 32v6" stroke="#E8E8EC" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 10: night fog -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M24 12a10 10 0 1 0 8 18 12 12 0 0 1-8-18Z"/><path class="ic-fg" d="M10 34h22M14 38h22" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 11: full moon -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><circle class="ic-bg" cx="24" cy="24" r="13"/><circle class="ic-fg" cx="20" cy="22" r="1.5"/><circle class="ic-fg" cx="27" cy="20" r="1.5"/><circle class="ic-fg" cx="25" cy="27" r="1.5"/></svg></div>
+      <!-- 12: crescent stars -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M28 12a14 14 0 1 0 8 24A12 12 0 0 1 28 12Z"/><path class="ic-fg" d="M36 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2Z"/></svg></div>
+      <!-- 13: rainbow -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-fg" d="M8 36a14 14 0 0 1 28 0M12 36a10 10 0 0 1 20 0" stroke="#E8E8EC" stroke-width="2.2" fill="none"/><path class="ic-bg" d="M30 28a7 7 0 0 1 1-13 9 9 0 0 1 12 4" stroke="#6E6E78" stroke-width="2" fill="none"/></svg></div>
+      <!-- 14: drops -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M16 18c0 4-3 8-6 8s-6-4-6-8c0-3 3-7 6-10 3 3 6 7 6 10Z" transform="translate(8 6)"/><path class="ic-fg" d="M34 24c0 4-3 7-6 7s-6-3-6-7c0-3 3-7 6-10 3 3 6 7 6 10Z" transform="translate(-2 4)"/></svg></div>
+      <!-- 15: moon z -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M28 8a16 16 0 1 0 12 28A14 14 0 0 1 28 8Z"/><path class="ic-fg" d="M20 22h6l-6 8h6" stroke="#E8E8EC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <!-- 16: sun cloud -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="6"/><path class="ic-bg" d="M18 6v4M6 18h4M18 30v-2M30 18h-2M9 9l3 3M27 9l-3 3M9 27l3-3" stroke="#6E6E78" stroke-width="2" stroke-linecap="round" fill="none"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg></div>
+      <!-- 17: snow cloud sun -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><circle class="ic-bg" cx="34" cy="14" r="5"/><path class="ic-fg" d="M14 30a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/><circle class="ic-bg" cx="18" cy="38" r="1.5"/><circle class="ic-bg" cx="24" cy="40" r="1.5"/><circle class="ic-bg" cx="30" cy="38" r="1.5"/></svg></div>
+      <!-- 18: sunrise -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M14 28a10 10 0 0 1 20 0H14Z"/><path class="ic-fg" d="M8 32h32M12 36h24" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 19: temp arrow -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M16 30V14a4 4 0 0 1 8 0v16a6 6 0 1 1-8 0Z"/><circle class="ic-fg" cx="20" cy="34" r="3"/><path class="ic-fg" d="M32 28V14M28 18l4-4 4 4" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <!-- 20: tornado -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M10 14h28M14 22h20M18 30h12M22 38h4" stroke="#6E6E78" stroke-width="3" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 21: umbrella -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-bg" d="M24 8c-9 0-16 6-16 14h32c0-8-7-14-16-14Z"/><path class="ic-fg" d="M24 22v14a4 4 0 0 1-8 0" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 22: wind -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-fg" d="M8 16h22a4 4 0 1 0-4-4M8 24h28a4 4 0 1 1-4 4M8 32h18" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div>
+      <!-- 23: flag -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><path class="ic-fg" d="M14 8v32" stroke="#E8E8EC" stroke-width="2.2" stroke-linecap="round"/><path class="ic-bg" d="M14 10h22l-6 8 6 8H14V10Z"/></svg></div>
+      <!-- 24: extra (visibility) -->
+      <div class="icon-cell"><svg viewBox="0 0 48 48"><circle class="ic-bg" cx="24" cy="24" r="10"/><circle class="ic-fg" cx="24" cy="24" r="4"/></svg></div>
+    </div>
+
+    <div class="icon-spec">
+      <div class="box"><div class="label">Größen</div><div class="v">16 · 20 · 24 · 32 · 48 px</div></div>
+      <div class="box"><div class="label">Farben</div><div class="v">fg #E8E8EC · bg #6E6E78</div></div>
+      <div class="box"><div class="label">Stil</div><div class="v">filled, two-tone, rounded</div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       05 LAYOUT
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">05</div>
+        <h2>Layout &amp; Raster</h2>
+      </div>
+      <p class="sec-desc">12-Spalten-Grid, 16 px Gap. Eine breite Lead-Spalte für den aktuellen Tag, eine schmale rechte Spalte für Kontext.</p>
+    </header>
+
+    <div class="grid-demo">
+      <div class="frame">
+        <div class="col">
+          <div class="blk lead">aktuell · 8 col · lead</div>
+          <div class="blk med">7-Tage-Vorhersage · 8 col</div>
+          <div class="blk short">heute übersicht · label · 8 col</div>
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px;">
+            <div class="blk med">Wind · 4 col</div>
+            <div class="blk med">UV-Index · 4 col</div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px;">
+            <div class="blk med">Luftfeuchte · 4 col</div>
+            <div class="blk med">Sicht · 4 col</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="blk tall">Niederschlag-Chart · 4 col</div>
+          <div class="blk med">Weitere Städte · 4 col</div>
+          <div class="blk med">Weitere Städte (fortsetzung)</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px;">
+      <div class="comp">
+        <div class="lbl">Spacing-Skala <span class="meta">scale · 4-base</span></div>
+        <div class="scale-row"><div class="lbl">--s-1</div><div class="px">4</div><div class="vis" style="width:4px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-2</div><div class="px">8</div><div class="vis" style="width:8px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-3</div><div class="px">12</div><div class="vis" style="width:12px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-4</div><div class="px">16</div><div class="vis" style="width:16px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-5</div><div class="px">24</div><div class="vis" style="width:24px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-6</div><div class="px">32</div><div class="vis" style="width:32px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-7</div><div class="px">48</div><div class="vis" style="width:48px"></div></div>
+        <div class="scale-row"><div class="lbl">--s-8</div><div class="px">64</div><div class="vis" style="width:64px"></div></div>
+      </div>
+      <div class="comp">
+        <div class="lbl">Radius <span class="meta">corner system</span></div>
+        <div class="radius-row">
+          <div class="box" style="border-radius:8px"><span class="name">--r-sm</span><span class="px">8 px</span></div>
+          <div class="box" style="border-radius:14px"><span class="name">--r-md</span><span class="px">14 px</span></div>
+          <div class="box" style="border-radius:20px"><span class="name">--r-lg</span><span class="px">20 px</span></div>
+          <div class="box" style="border-radius:999px"><span class="name">--r-pill</span><span class="px">999</span></div>
+        </div>
+        <p style="margin:20px 0 0; color:var(--tx-3); font-size:12.5px;">Karten verwenden <span class="mono" style="color:var(--tx-2)">--r-md</span>. Pillen, Toggles und Inputs nutzen <span class="mono" style="color:var(--tx-2)">--r-pill</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       06 COMPONENTS
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">06</div>
+        <h2>Komponenten</h2>
+      </div>
+      <p class="sec-desc">Die Bausteine des Interfaces — alle aus den oben definierten Tokens.</p>
+    </header>
+
+    <div class="comp-grid">
+
+      <!-- buttons -->
+      <div class="comp span-6">
+        <div class="lbl">Buttons <span class="meta">action hierarchy</span></div>
+        <div class="btn-row">
+          <button class="btn btn-primary">Get Started</button>
+          <button class="btn btn-secondary">Stadt hinzufügen</button>
+          <button class="btn btn-ghost">Mehr anzeigen</button>
+        </div>
+        <div style="margin-top:16px;" class="btn-row">
+          <button class="btn btn-secondary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-7-7-12a7 7 0 0 1 14 0c0 5-7 12-7 12Z"/></svg>Standort</button>
+          <button class="btn btn-primary">Alle Städte ansehen →</button>
+        </div>
+      </div>
+
+      <!-- segmented -->
+      <div class="comp span-3">
+        <div class="lbl">Segmented <span class="meta">view switch</span></div>
+        <div class="seg"><button>Heute</button><button>Morgen</button><button class="on">7 Tage</button></div>
+        <div style="height:12px"></div>
+        <div class="seg"><button class="on">Forecast</button><button>Luftqualität</button></div>
+      </div>
+
+      <!-- search -->
+      <div class="comp span-3">
+        <div class="lbl">Search <span class="meta">global input</span></div>
+        <div class="input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+          <input placeholder="Stadt suchen…" />
+        </div>
+        <div style="height:12px"></div>
+        <div class="chip-row">
+          <span class="chip on">Berlin</span>
+          <span class="chip">München</span>
+          <span class="chip">Hamburg</span>
+        </div>
+      </div>
+
+      <!-- weather hero card -->
+      <div class="comp span-4">
+        <div class="lbl">Hero · Aktuelles Wetter <span class="meta">primary card</span></div>
+        <div class="wcard">
+          <div class="top">
+            <span>Freitag</span>
+            <span class="mono" style="color:var(--tx-3)">11:45</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div class="temp">16<span class="deg">°C</span></div>
+            <div class="ic">
+              <svg width="56" height="56" viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="6"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="row"><span class="k">Gefühlt</span><span class="v">18°</span></div>
+            <div class="row"><span class="k">Sonnenaufg.</span><span class="v">05:30</span></div>
+            <div class="row"><span class="k">Wind NO</span><span class="v">6,7 km/h</span></div>
+            <div class="row"><span class="k">Sonnenunt.</span><span class="v">21:45</span></div>
+            <div class="row"><span class="k">Druck</span><span class="v">1013 hPa</span></div>
+            <div class="row"><span class="k">Feuchte</span><span class="v">51 %</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6-day -->
+      <div class="comp span-8">
+        <div class="lbl">7-Tage-Liste <span class="meta">compact forecast</span></div>
+        <div class="day-row">
+          <div class="day"><div class="d">Sa</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="5"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg></div><div class="t">10<span class="deg">°</span></div></div>
+          <div class="day"><div class="d">So</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/><path d="M20 34v5M26 34v5M32 34v5" stroke="#E8E8EC" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></div><div class="t">15<span class="deg">°</span></div></div>
+          <div class="day"><div class="d">Mo</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><path class="ic-fg" d="M14 32a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/></svg></div><div class="t">11<span class="deg">°</span></div></div>
+          <div class="day"><div class="d">Di</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><path class="ic-fg" d="M14 32a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/></svg></div><div class="t">10<span class="deg">°</span></div></div>
+          <div class="day"><div class="d">Mi</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/><path d="M22 34v5M28 34v5" stroke="#E8E8EC" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></div><div class="t">12<span class="deg">°</span></div></div>
+          <div class="day"><div class="d">Do</div><div class="ic"><svg width="28" height="28" viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="5"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg></div><div class="t">10<span class="deg">°</span></div></div>
+        </div>
+      </div>
+
+      <!-- metric: wind -->
+      <div class="comp span-4">
+        <div class="lbl">Metric · Wind <span class="meta">bars</span></div>
+        <div class="metric" style="padding:0; border:none; background:none;">
+          <div class="head"><div class="t">Windgeschwindigkeit</div><div class="sub">06:20</div></div>
+          <div class="bars">
+            <span style="height:30%"></span><span style="height:42%"></span><span style="height:55%"></span>
+            <span style="height:48%"></span><span style="height:62%"></span><span style="height:80%" class="hi"></span>
+            <span style="height:72%"></span><span style="height:58%"></span><span style="height:50%"></span>
+            <span style="height:40%"></span><span style="height:34%"></span><span style="height:30%"></span>
+            <span style="height:28%"></span><span style="height:36%"></span><span style="height:44%"></span>
+            <span style="height:52%"></span><span style="height:60%"></span><span style="height:48%"></span>
+            <span style="height:38%"></span><span style="height:30%"></span><span style="height:26%"></span>
+            <span style="height:22%"></span><span style="height:30%"></span><span style="height:38%"></span>
+          </div>
+          <div class="foot"><span class="v" style="color:var(--tx-1); font-size:14px; font-weight:600;">7,50 <span style="color:var(--tx-3); font-weight:400">km/h</span></span><span>NO · Böen 12</span></div>
+        </div>
+      </div>
+
+      <!-- metric: UV gauge -->
+      <div class="comp span-4">
+        <div class="lbl">Metric · UV-Index <span class="meta">gauge</span></div>
+        <div class="metric" style="padding:0; border:none; background:none;">
+          <div class="head"><div class="t">UV-Index</div><div class="sub">moderat</div></div>
+          <div class="gauge">
+            <svg viewBox="0 0 160 90">
+              <path d="M10 80 A70 70 0 0 1 150 80" fill="none" stroke="#23232B" stroke-width="10" stroke-linecap="round"/>
+              <path d="M10 80 A70 70 0 0 1 90 12" fill="none" stroke="oklch(.72 .07 235)" stroke-width="10" stroke-linecap="round"/>
+              <circle cx="90" cy="12" r="5" fill="#F2F2F4"/>
+            </svg>
+          </div>
+          <div style="text-align:center; margin-top:-8px;"><span style="font-size:28px; font-weight:600; letter-spacing:-0.02em;">5,5</span> <span style="color:var(--tx-3); font-size:12px;">UV</span></div>
+        </div>
+      </div>
+
+      <!-- metric: humidity -->
+      <div class="comp span-4">
+        <div class="lbl">Metric · Feuchte <span class="meta">number + icon</span></div>
+        <div class="metric" style="padding:0; border:none; background:none;">
+          <div class="head"><div class="t">Luftfeuchtigkeit</div><div class="sub">aktuell</div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <div class="v">84<span class="u">%</span></div>
+            <svg width="48" height="48" viewBox="0 0 48 48"><path class="ic-bg" d="M34 24c0 6-4 11-9 11s-9-5-9-11c0-5 4-11 9-17 5 6 9 12 9 17Z"/><path class="ic-fg" d="M27 24c0 4-1 7-3 7" stroke="#E8E8EC" stroke-width="2" stroke-linecap="round" fill="none" opacity=".5"/></svg>
+          </div>
+          <div class="foot" style="margin-top:18px;">Taupunkt: 12° aktuell</div>
+        </div>
+      </div>
+
+      <!-- city item -->
+      <div class="comp span-6">
+        <div class="lbl">Stadt-Element <span class="meta">side list</span></div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:var(--bg-2); border:1px solid var(--line-2); border-radius:var(--r-md);">
+            <div>
+              <div style="font-size:11px; color:var(--tx-3); margin-bottom:2px;">Deutschland</div>
+              <div style="font-size:15px; font-weight:600;">Berlin</div>
+              <div style="font-size:12px; color:var(--tx-3); margin-top:2px;">Bewölkt</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <svg width="36" height="36" viewBox="0 0 48 48"><path class="ic-fg" d="M14 32a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/></svg>
+              <div style="font-size:22px; font-weight:600;">12°</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md);">
+            <div>
+              <div style="font-size:11px; color:var(--tx-3); margin-bottom:2px;">USA</div>
+              <div style="font-size:15px; font-weight:600;">California</div>
+              <div style="font-size:12px; color:var(--tx-3); margin-top:2px;">Windig</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <svg width="36" height="36" viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="5"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg>
+              <div style="font-size:22px; font-weight:600;">22°</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- toggles & meta -->
+      <div class="comp span-6">
+        <div class="lbl">Toggle &amp; Status-Pill <span class="meta">supporting</span></div>
+        <div style="display:flex; gap:24px; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px; background:var(--bg-2); border:1px solid var(--line-2); border-radius:var(--r-pill); padding:5px;">
+            <button style="background:var(--bg-0); border:none; color:var(--tx-1); width:32px; height:32px; border-radius:50%; cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block;margin:auto;"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+            </button>
+            <button style="background:none; border:none; color:var(--tx-3); width:32px; height:32px; border-radius:50%; cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:block;margin:auto;"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>
+            </button>
+          </div>
+          <span class="chip" style="background:rgba(140,200,170,.08); border-color:rgba(140,200,170,.25); color:oklch(.74 .07 165);">● Live · gerade aktualisiert</span>
+          <span class="chip">letzte Sync · 11:42</span>
+        </div>
+        <div style="margin-top:18px; display:flex; gap:24px; align-items:flex-start;">
+          <div>
+            <div class="label" style="margin-bottom:6px;">Empty State</div>
+            <div style="border:1px dashed var(--line-2); border-radius:var(--r-md); padding:22px; text-align:center; color:var(--tx-3); font-size:13px; min-width:220px;">
+              <div style="margin-bottom:8px; opacity:.6;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" style="display:inline;"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+              </div>
+              Keine Stadt ausgewählt
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div class="label" style="margin-bottom:6px;">Tooltip</div>
+            <div style="display:inline-block; background:var(--bg-3); border:1px solid var(--line-2); border-radius:8px; padding:8px 12px; font-size:12px; box-shadow:var(--sh-2);">
+              Niederschlagswahrscheinlichkeit · <span class="mono" style="color:var(--tx-1)">68 %</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       07 DOS & DONTS
+       ============================================================ -->
+  <section>
+    <header>
+      <div>
+        <div class="sec-num">07</div>
+        <h2>Do &amp; Don't</h2>
+      </div>
+      <p class="sec-desc">Was das System ausmacht — und was es bricht.</p>
+    </header>
+
+    <div class="rules">
+      <div class="rule do">
+        <span class="tag">● Do</span>
+        <h3>Monochrome Icons, einheitlicher Ton</h3>
+        <p>Alle Wetter-Icons aus derselben Familie, zweistufig grau. Sie sollen wie aus einem Guss wirken.</p>
+        <div class="demo" style="display:flex; gap:18px; justify-content:center;">
+          <svg width="44" height="44" viewBox="0 0 48 48"><path class="ic-bg" d="M14 30a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/></svg>
+          <svg width="44" height="44" viewBox="0 0 48 48"><circle class="ic-bg" cx="18" cy="18" r="6"/><path class="ic-fg" d="M20 38a7 7 0 0 1 1-13 9 9 0 0 1 17 2 5 5 0 0 1-1 11H20Z"/></svg>
+          <svg width="44" height="44" viewBox="0 0 48 48"><circle class="ic-bg" cx="24" cy="24" r="14"/><path class="ic-fg" d="M28 10a14 14 0 0 0 0 28 14 14 0 0 1 0-28Z"/></svg>
+        </div>
+      </div>
+
+      <div class="rule dont">
+        <span class="tag">● Don't</span>
+        <h3>Bunte oder gemischte Icon-Stile</h3>
+        <p>Kein Sonnengelb, kein Wolken-Blau, keine Mischung aus Outline und Filled. Bricht die Ruhe sofort.</p>
+        <div class="demo" style="display:flex; gap:18px; justify-content:center;">
+          <svg width="44" height="44" viewBox="0 0 48 48"><circle cx="24" cy="24" r="10" fill="#FFD24A"/><g stroke="#FFD24A" stroke-width="2.5" stroke-linecap="round"><path d="M24 6v6M24 36v6M6 24h6M36 24h6M11 11l4 4M33 33l4 4M11 37l4-4M33 15l4-4"/></g></svg>
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#4A9CFF" stroke-width="2"><path d="M14 30a8 8 0 0 1 1-15 10 10 0 0 1 20 3 6 6 0 0 1-1 12H14Z"/></svg>
+          <svg width="44" height="44" viewBox="0 0 48 48"><circle cx="24" cy="24" r="10" fill="#FF6B6B"/></svg>
+        </div>
+      </div>
+
+      <div class="rule do">
+        <span class="tag">● Do</span>
+        <h3>Akzentfarbe nur funktional</h3>
+        <p>Slate-Blue ausschließlich für aktive Auswahl, Chart-Linien und Hervorhebungen. Nie als Schmuckfarbe.</p>
+        <div class="demo" style="display:flex; gap:10px; align-items:center;">
+          <span class="chip on">Forecast</span>
+          <span class="chip">Air Quality</span>
+          <span style="color:var(--tx-3); font-size:12px; margin-left:auto;">↓ Auswahl markiert</span>
+        </div>
+      </div>
+
+      <div class="rule dont">
+        <span class="tag">● Don't</span>
+        <h3>Gradients oder bunte Karten</h3>
+        <p>Keine Sky-Gradient-Hintergründe, keine farbigen Wetter-Kacheln. Die Fläche bleibt neutral — die Daten geben Atmosphäre.</p>
+        <div class="demo">
+          <div style="height:60px; border-radius:10px; background:linear-gradient(135deg, #4A9CFF, #FF6B6B); display:flex; align-items:center; justify-content:center; color:white; font-weight:600;">16° Sonnig</div>
+        </div>
+      </div>
+
+      <div class="rule do">
+        <span class="tag">● Do</span>
+        <h3>Hierarchie durch Helligkeit</h3>
+        <p>Wichtige Zahlen hell, Kontext entsättigt grau. Auch ohne Farbe entsteht klare Lesbarkeit.</p>
+        <div class="demo" style="display:flex; align-items:baseline; gap:12px;">
+          <span style="font-size:32px; font-weight:600; letter-spacing:-0.02em;">16°</span>
+          <span style="color:var(--tx-2); font-size:14px;">Gefühlt</span>
+          <span style="color:var(--tx-3); font-size:14px;">18°</span>
+        </div>
+      </div>
+
+      <div class="rule dont">
+        <span class="tag">● Don't</span>
+        <h3>Reines Schwarz auf reinem Weiß</h3>
+        <p>Harte Kontraste wirken auf Dauer anstrengend. Immer leicht entsättigte Töne aus der Skala verwenden.</p>
+        <div class="demo" style="background:#000; border-color:#000;">
+          <div style="color:#fff; font-size:14px;">#000 auf #FFF → vermeiden</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>WEATHER · DESIGN GUIDE · v0.1</span>
+    <span>26 · 05 · 2026</span>
+  </footer>
+
+</main>
+</body>
+</html>
