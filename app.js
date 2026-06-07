@@ -1,10 +1,9 @@
-// --- KONFIGURATION ---
-const API_BASE_URL = 'https://wetter-api.onrender.com'; // Render-URL – ggf. anpassen
+const LAT = 49.7913;
+const LON = 9.9534;
 
-// --- INITIALISIERUNG DER CHARTS ---
-const tempChart = echarts.init(document.getElementById('temp-chart'), 'dark');
-const precipChart = echarts.init(document.getElementById('precip-chart'), 'dark');
-const trendChart = echarts.init(document.getElementById('trend-chart'), 'dark');
+const tempChart      = echarts.init(document.getElementById('temp-chart'), 'dark');
+const precipChart    = echarts.init(document.getElementById('precip-chart'), 'dark');
+const trendChart     = echarts.init(document.getElementById('trend-chart'), 'dark');
 const deviationChart = echarts.init(document.getElementById('deviation-chart'), 'dark');
 
 const commonOptions = {
@@ -14,117 +13,143 @@ const commonOptions = {
     grid: { left: '15%', right: '5%', bottom: '15%', top: '10%' }
 };
 
-// --- MAPLIBRE SETUP ---
-let map;
+// Karte
 try {
-    map = new maplibregl.Map({
+    new maplibregl.Map({
         container: 'map',
         style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-        center: [9.9534, 49.7913],
+        center: [LON, LAT],
         zoom: 13,
         pitch: 50,
         bearing: -10,
         antialias: true
     });
-} catch (e) {
-    console.error('MapLibre Fehler:', e);
-}
+} catch (e) {}
 
-// --- STATUS UPDATE ---
-function updateStatus(connected) {
-    const dot = document.getElementById('status-dot');
+function updateStatus(ok) {
+    const dot  = document.getElementById('status-dot');
     const text = document.getElementById('status-text');
-    if (dot && text) {
-        dot.style.background = connected ? '#4ECDC4' : '#FF6B6B';
-        text.innerText = connected ? 'API Online' : 'API Offline';
-    }
+    if (!dot || !text) return;
+    dot.style.background = ok ? '#4ECDC4' : '#FF6B6B';
+    text.innerText        = ok ? 'Daten geladen' : 'Fehler beim Laden';
 }
 
-// --- DATEN-FUNKTIONEN ---
-
-// 1. Aktuelle Wettervorhersage (Open-Meteo via API)
+// 1. Wettervorhersage – Open-Meteo Forecast API (kein Key nötig)
 async function updateCurrentWeather() {
     try {
-        const response = await fetch(`${API_BASE_URL}/weather`);
-        if (!response.ok) throw new Error('API unreachable');
-        const data = await response.json();
-        
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
+                  + `&hourly=temperature_2m,precipitation&timezone=Europe%2FBerlin&forecast_days=7`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error();
+        const data = await resp.json();
+
         updateStatus(true);
-        const weather = data.weather_data;
-        const labels = weather.time.slice(0, 24).map(t => new Date(t).getHours() + ':00');
-        const temps = weather.temperature_2m.slice(0, 24);
-        const precip = weather.precipitation.slice(0, 24);
+        const h      = data.hourly;
+        const labels = h.time.slice(0, 48).map(t => {
+            const d = new Date(t);
+            return d.getHours() === 0
+                ? d.toLocaleDateString('de-DE', { weekday: 'short' })
+                : d.getHours() + ':00';
+        });
 
         tempChart.setOption({
             ...commonOptions,
-            xAxis: { type: 'category', data: labels },
+            xAxis: { type: 'category', data: labels, axisLabel: { interval: 5 } },
             yAxis: { type: 'value', axisLabel: { formatter: '{value}°' } },
-            series: [{ name: 'Temperatur', data: temps, type: 'line', smooth: true, color: '#FF6B6B', areaStyle: { opacity: 0.2 } }]
+            series: [{ name: 'Temperatur', data: h.temperature_2m.slice(0, 48),
+                       type: 'line', smooth: true, color: '#FF6B6B',
+                       areaStyle: { opacity: 0.2 } }]
         });
 
         precipChart.setOption({
             ...commonOptions,
-            xAxis: { type: 'category', data: labels },
+            xAxis: { type: 'category', data: labels, axisLabel: { interval: 5 } },
             yAxis: { type: 'value', axisLabel: { formatter: '{value}mm' } },
-            series: [{ name: 'Niederschlag', data: precip, type: 'bar', color: '#4ECDC4' }]
+            series: [{ name: 'Niederschlag', data: h.precipitation.slice(0, 48),
+                       type: 'bar', color: '#4ECDC4' }]
         });
-    } catch (error) {
-        console.error('Fehler beim Laden des aktuellen Wetters:', error);
+    } catch {
         updateStatus(false);
     }
 }
 
-// 2. Historische Klimatrends (DWD via API)
+// 2. Klimatrends – Open-Meteo Historical Archive (ERA5, kein Key nötig)
 async function updateClimateTrends() {
     trendChart.showLoading();
     deviationChart.showLoading();
-    
     try {
-        const response = await fetch(`${API_BASE_URL}/climate-trends`);
-        if (!response.ok) throw new Error('Climate API unreachable');
-        const data = await response.json();
+        const endDate = new Date(Date.now() - 5 * 864e5).toISOString().split('T')[0];
+        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}`
+                  + `&start_date=1940-01-01&end_date=${endDate}&daily=temperature_2m_mean`
+                  + `&timezone=Europe%2FBerlin`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error();
+        const data = await resp.json();
 
-        if (!data.years || data.years.length === 0) {
-            return;
-        }
+        const times = data.daily.time;
+        const temps = data.daily.temperature_2m_mean;
+
+        // Jahresdurchschnitte berechnen
+        const byYear = {};
+        times.forEach((t, i) => {
+            if (temps[i] === null) return;
+            const yr = parseInt(t.slice(0, 4));
+            (byYear[yr] = byYear[yr] || []).push(temps[i]);
+        });
+
+        const currentYear = new Date().getFullYear();
+        const years = [], annualTemp = [];
+        Object.keys(byYear).sort().forEach(y => {
+            const yr = parseInt(y), vals = byYear[y];
+            if (yr < currentYear  && vals.length < 30)  return;
+            if (yr === currentYear && vals.length < 270) return;
+            years.push(yr);
+            annualTemp.push(+(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
+        });
+
+        // Referenzmittel 1961–1990 (WMO-Standard)
+        const refVals = years.flatMap((y, i) => y >= 1961 && y <= 1990 ? [annualTemp[i]] : []);
+        const refMean = refVals.reduce((a, b) => a + b, 0) / refVals.length;
+
+        // 10-Jahres gleitender Durchschnitt (zentriert)
+        const movingAvg10y = annualTemp.map((_, i) => {
+            const s = Math.max(0, i - 4), e = Math.min(annualTemp.length - 1, i + 5);
+            const w = annualTemp.slice(s, e + 1);
+            return +(w.reduce((a, b) => a + b, 0) / w.length).toFixed(2);
+        });
+
+        const deviation = annualTemp.map(t => +((t - refMean).toFixed(2)));
+
         trendChart.setOption({
             ...commonOptions,
             legend: { data: ['Jahresmittel', '10J Trend'], textStyle: { color: '#fff' }, bottom: 0 },
-            xAxis: { type: 'category', data: data.years },
+            xAxis: { type: 'category', data: years, axisLabel: { interval: 9 } },
             yAxis: { type: 'value', min: 'dataMin', axisLabel: { formatter: '{value}°' } },
             series: [
-                { name: 'Jahresmittel', data: data.annual_temp, type: 'line', symbol: 'none', color: 'rgba(255,255,255,0.3)' },
-                { name: '10J Trend', data: data.moving_avg_10y, type: 'line', smooth: true, color: '#FF6B6B', lineStyle: { width: 3 } }
+                { name: 'Jahresmittel', data: annualTemp, type: 'line',
+                  symbol: 'none', color: 'rgba(255,255,255,0.3)' },
+                { name: '10J Trend', data: movingAvg10y, type: 'line',
+                  smooth: true, color: '#FF6B6B', lineStyle: { width: 3 } }
             ]
         });
 
-        // Abweichungs-Chart (Warming Stripes Style)
         deviationChart.setOption({
             ...commonOptions,
-            xAxis: { type: 'category', data: data.years },
+            xAxis: { type: 'category', data: years, axisLabel: { interval: 9 } },
             yAxis: { type: 'value', axisLabel: { formatter: '{value}°' } },
             visualMap: {
-                show: false,
-                min: -2,
-                max: 2,
-                inRange: { color: ['#313695', '#4575b4', '#abd9e9', '#fee090', '#f46d43', '#a50026'] }
+                show: false, min: -2, max: 2,
+                inRange: { color: ['#313695','#4575b4','#abd9e9','#fee090','#f46d43','#a50026'] }
             },
-            series: [{
-                name: 'Abweichung',
-                data: data.deviation,
-                type: 'bar',
-                barWidth: '90%'
-            }]
+            series: [{ name: 'Abweichung', data: deviation, type: 'bar', barWidth: '90%' }]
         });
 
-    } catch (error) {
-        console.error('Fehler beim Laden der Klimatrends:', error);
+    } catch {
         trendChart.hideLoading();
         deviationChart.hideLoading();
     }
 }
 
-// Start
 updateCurrentWeather();
 updateClimateTrends();
 
