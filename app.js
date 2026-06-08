@@ -1,10 +1,22 @@
 const LAT = 49.7913;
 const LON = 9.9534;
 
-const tempChart      = echarts.init(document.getElementById('temp-chart'), 'dark');
-const precipChart    = echarts.init(document.getElementById('precip-chart'), 'dark');
-const trendChart     = echarts.init(document.getElementById('trend-chart'), 'dark');
-const deviationChart = echarts.init(document.getElementById('deviation-chart'), 'dark');
+function initCharts() {
+    if (typeof echarts === 'undefined' || !document.getElementById('temp-chart')) {
+        setTimeout(initCharts, 100);
+        return;
+    }
+
+    window.tempChart      = echarts.init(document.getElementById('temp-chart'), 'dark');
+    window.precipChart    = echarts.init(document.getElementById('precip-chart'), 'dark');
+    window.trendChart     = echarts.init(document.getElementById('trend-chart'), 'dark');
+    window.deviationChart = echarts.init(document.getElementById('deviation-chart'), 'dark');
+
+    updateCurrentWeather();
+    updateClimateTrends();
+}
+
+initCharts();
 
 const commonOptions = {
     backgroundColor: 'transparent',
@@ -13,11 +25,11 @@ const commonOptions = {
     grid: { left: '15%', right: '5%', bottom: '15%', top: '10%' }
 };
 
-// Karte
+// Karte - MapTiler mit MapLibreGL
 try {
     new maplibregl.Map({
         container: 'map',
-        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        style: 'https://api.maptiler.com/maps/streets-v2/style.json?key=OUi1wI9hnNySlTDH9fHe',
         center: [LON, LAT],
         zoom: 13,
         pitch: 50,
@@ -159,3 +171,13 @@ window.addEventListener('resize', () => {
     trendChart.resize();
     deviationChart.resize();
 });
+
+function updateLocation() {
+    const newLat = parseFloat(document.getElementById('lat-input').value);
+    const newLon = parseFloat(document.getElementById('lon-input').value);
+    if (isNaN(newLat) || isNaN(newLon)) return;
+
+    eval(`LAT = ${newLat}; LON = ${newLon};`);
+    updateCurrentWeather();
+    updateClimateTrends();
+}
