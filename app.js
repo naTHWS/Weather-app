@@ -18,9 +18,14 @@ function initCharts() {
 
 initCharts();
 
+// Design Guide Akzente
+const ACCENT_WARM  = '#F7B955';
+const ACCENT_COOL  = '#5BC0EB';
+const ACCENT_TREND = '#EF6F6C';
+
 const commonOptions = {
     backgroundColor: 'transparent',
-    textStyle: { color: '#fff', fontFamily: 'Segoe UI' },
+    textStyle: { color: '#F5F6F8', fontFamily: 'Inter, Segoe UI, sans-serif' },
     tooltip: { trigger: 'axis' },
     grid: { left: '15%', right: '5%', bottom: '15%', top: '10%' }
 };
@@ -42,7 +47,7 @@ function updateStatus(ok) {
     const dot  = document.getElementById('status-dot');
     const text = document.getElementById('status-text');
     if (!dot || !text) return;
-    dot.style.background = ok ? '#4ECDC4' : '#FF6B6B';
+    dot.style.background = ok ? ACCENT_COOL : ACCENT_TREND;
     text.innerText        = ok ? 'Daten geladen' : 'Fehler beim Laden';
 }
 
@@ -69,7 +74,7 @@ async function updateCurrentWeather() {
             xAxis: { type: 'category', data: labels, axisLabel: { interval: 5 } },
             yAxis: { type: 'value', axisLabel: { formatter: '{value}°' } },
             series: [{ name: 'Temperatur', data: h.temperature_2m.slice(0, 48),
-                       type: 'line', smooth: true, color: '#FF6B6B',
+                       type: 'line', smooth: true, color: ACCENT_WARM,
                        areaStyle: { opacity: 0.2 } }]
         });
 
@@ -78,7 +83,7 @@ async function updateCurrentWeather() {
             xAxis: { type: 'category', data: labels, axisLabel: { interval: 5 } },
             yAxis: { type: 'value', axisLabel: { formatter: '{value}mm' } },
             series: [{ name: 'Niederschlag', data: h.precipitation.slice(0, 48),
-                       type: 'bar', color: '#4ECDC4' }]
+                       type: 'bar', color: ACCENT_COOL }]
         });
     } catch {
         updateStatus(false);
@@ -101,7 +106,6 @@ async function updateClimateTrends() {
         const times = data.daily.time;
         const temps = data.daily.temperature_2m_mean;
 
-        // Jahresdurchschnitte berechnen
         const byYear = {};
         times.forEach((t, i) => {
             if (temps[i] === null) return;
@@ -119,11 +123,9 @@ async function updateClimateTrends() {
             annualTemp.push(+(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
         });
 
-        // Referenzmittel 1961–1990 (WMO-Standard)
         const refVals = years.flatMap((y, i) => y >= 1961 && y <= 1990 ? [annualTemp[i]] : []);
         const refMean = refVals.reduce((a, b) => a + b, 0) / refVals.length;
 
-        // 10-Jahres gleitender Durchschnitt (zentriert)
         const movingAvg10y = annualTemp.map((_, i) => {
             const s = Math.max(0, i - 4), e = Math.min(annualTemp.length - 1, i + 5);
             const w = annualTemp.slice(s, e + 1);
@@ -134,14 +136,14 @@ async function updateClimateTrends() {
 
         trendChart.setOption({
             ...commonOptions,
-            legend: { data: ['Jahresmittel', '10J Trend'], textStyle: { color: '#fff' }, bottom: 0 },
+            legend: { data: ['Jahresmittel', '10J Trend'], textStyle: { color: '#F5F6F8' }, bottom: 0 },
             xAxis: { type: 'category', data: years, axisLabel: { interval: 9 } },
             yAxis: { type: 'value', min: 'dataMin', axisLabel: { formatter: '{value}°' } },
             series: [
                 { name: 'Jahresmittel', data: annualTemp, type: 'line',
                   symbol: 'none', color: 'rgba(255,255,255,0.3)' },
                 { name: '10J Trend', data: movingAvg10y, type: 'line',
-                  smooth: true, color: '#FF6B6B', lineStyle: { width: 3 } }
+                  smooth: true, color: ACCENT_TREND, lineStyle: { width: 3 } }
             ]
         });
 
