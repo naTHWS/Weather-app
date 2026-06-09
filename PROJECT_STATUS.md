@@ -1,5 +1,11 @@
 # Projekt-Dokumentation: Wetter Dashboard Würzburg
 
+> **⚠️ Aktueller Stand siehe [PHASE 5](#phase-5-vanilla-single-file-app--design-guide-v02-9-juni-2026) am Ende des Dokuments.**
+> Die Phasen 1–4 beschreiben frühere Architekturen (Streamlit, FastAPI-Backend + Bright Sky/DWD,
+> Glassmorphismus-Frontend mit `style.css`/`app.js`). Diese sind **historisch** und entsprechen
+> nicht mehr der aktuellen App. Die Live-App ist seit dem 8./9. Juni 2026 eine einzelne, editierbare
+> `index.html` (Vanilla, Open-Meteo direkt, **kein Backend**), die den Design Guide v0.2 umsetzt.
+
 ---
 
 ## PHASE 1: Prototyping (Streamlit)
@@ -717,3 +723,75 @@ function selectDay(idx) {
 ---
 
 *Zuletzt aktualisiert: 3. Juni 2026*
+
+---
+
+## PHASE 5: Vanilla-Single-File-App & Design Guide v0.2 (9. Juni 2026)
+
+### 1. Ausgangslage
+
+Das bisherige Frontend war ein **kompilierter Figma-Make-Export** (~938 KB minifizierter
+React-Bundle, gzip+base64 im `__bundler/manifest`) — **nicht von Hand editierbar**.
+Änderungen am Design Guide ließen sich darin nicht nachziehen. Außerdem war das in Phase 2/3
+beschriebene FastAPI-Backend nicht zuverlässig erreichbar.
+
+### 2. Entscheidung: Neuaufbau als editierbare Single-File-App
+
+`index.html` wurde **komplett neu** als eine einzige, von Hand wartbare Vanilla-Datei aufgebaut
+(Inline-CSS + -JS, nur CDN-Bibliotheken). Sie setzt den **Design Guide v0.2** 1:1 um
+(dark, monochrom + Pastell-Wetter-Codierung; Tokens, Icon-System, Tönungsregeln).
+
+| Aspekt | Umsetzung |
+|---|---|
+| **Stack** | HTML5 + Vanilla-JS + Inline-CSS; ECharts 5.4.3, MapLibre GL 4.7.1 (CDN) |
+| **Schriften** | Inter (Interface/Daten), JetBrains Mono (technische Werte) |
+| **Datenquelle** | **Open-Meteo direkt, kein Backend, kein API-Key** |
+| **Tabs** | Vorhersage · Karte · Klimaanalyse |
+
+### 3. Datenfluss (KEIN Backend)
+
+Alle Daten kommen direkt vom Browser, ohne eigenen Server und ohne Schlüssel:
+
+| Zweck | Endpoint |
+|---|---|
+| Aktuelles Wetter + 7-Tage + stündlich | `api.open-meteo.com/v1/forecast` |
+| Historische Klimadaten (ERA5, ab 1940) | `archive-api.open-meteo.com/v1/archive` |
+| Stadtsuche (inkl. Dörfer) | `geocoding-api.open-meteo.com/v1/search` |
+| Heatmap-Temperaturen (54 Städte, 1 Call) | `api.open-meteo.com/v1/forecast` (Multi-Location) |
+| Karten-Tiles | CARTO Dark Matter (Raster, **key-frei**) |
+
+### 4. Features je Tab
+
+- **Vorhersage:** Hero-Zustandskarte mit Tönung (nie Fläche), 7-Tage-Strip (Wochentage),
+  Temperaturverlauf (Punkt markiert „jetzt" konsistent zur Hero-Temperatur), Niederschlag
+  (mm = l/m²), Wind-Bars, UV-Bogen, Luftfeuchte/Sicht.
+- **Karte:** Umschalter **Temperatur-Heatmap ⇄ Standort**. Die Heatmap holt aktuelle
+  Temperaturen für 54 deutsche Städte in *einem* Multi-Location-Aufruf und rendert
+  farbcodierte MapLibre-`circle`-Layer (Farbinterpolation = Temperatur-Skala des Guide),
+  mit Legende und Hover-Popup. „Standort" zeigt die Detailansicht der gewählten Stadt.
+- **Klimaanalyse:** Jahresmittel + 10-Jahres-Trend, Abweichung vs. Referenz 1961–1990,
+  Monat×Jahr-Heatmap — alles aus der ERA5-Archive-API.
+
+### 5. Aufgeräumt / Sicherheit
+
+- **Gelöscht** (toter Phase-2/3-Code, von nichts referenziert): `app.js`, `style.css`,
+  `climate-fix.js`.
+- **Aus Git entfernt:** `wind-global.nc` (1 MB Binärdatei; jetzt via `*.nc` ignoriert).
+- **Sicherheit:** der zuvor hartkodierte MapTiler-API-Key wurde entfernt und durch
+  key-freie CARTO-Tiles ersetzt.
+- Der alte kompilierte Export liegt als `_figma-make-export.index.html.bak` (gitignored).
+
+### 6. Hinweis zum Python-Anteil (`main.py`, `analysis.py`)
+
+Diese Dateien gehören zur akademischen Anforderung („Analyse und Darstellung mit Python")
+und bleiben als **eigenständige Analyse-/Backend-Schicht** erhalten. Das aktuelle Frontend
+benötigt sie **nicht** (es spricht Open-Meteo direkt an). Wer das Backend nutzen will,
+startet es separat (FastAPI/Uvicorn, siehe Phase 2/3 + `render.yaml`).
+
+### 7. Lokal testen
+
+`python -m http.server 4173` im Projektroot (siehe `.claude/launch.json`, Server „static").
+
+---
+
+*Zuletzt aktualisiert: 9. Juni 2026*

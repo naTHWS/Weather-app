@@ -74,8 +74,13 @@
     background:var(--bg-3); border:1px solid var(--line-2); border-radius:var(--r-md); box-shadow:var(--sh-2);
     padding:6px; max-height:280px; overflow:auto; display:none; }
   .suggest.open{ display:block; }
-  .suggest div{ padding:9px 12px; border-radius:var(--r-sm); cursor:pointer; color:var(--tx-2); font-size:13px; }
+  .suggest div{ padding:9px 12px; border-radius:var(--r-sm); cursor:pointer; color:var(--tx-2); font-size:13px;
+    display:flex; align-items:baseline; gap:8px; }
   .suggest div:hover{ background:var(--bg-2); color:var(--tx-1); }
+  .suggest .nm{ font-weight:500; }
+  .suggest .rg{ color:var(--tx-3); font-size:11.5px; margin-left:auto; white-space:nowrap; }
+  .suggest .empty{ color:var(--tx-3); cursor:default; }
+  .suggest .empty:hover{ background:none; color:var(--tx-3); }
 
   .chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:var(--r-pill);
     background:var(--bg-2); border:1px solid var(--line-2); color:var(--tx-2); font-size:11.5px; font-weight:500; cursor:pointer; transition:.15s; }
@@ -160,6 +165,22 @@
   .map-badge .city{ font-size:15px; font-weight:600; }
   .map-badge .t{ font-size:22px; font-weight:600; letter-spacing:-0.02em; }
   .map-badge .ic{ width:34px; height:34px; }
+
+  /* Heatmap-Legende (Temperatur-Skala des Design Guide) */
+  .map-legend{ position:absolute; left:16px; bottom:16px; z-index:5; width:204px;
+    background:rgba(18,18,21,.82); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    border:1px solid var(--line-2); border-radius:var(--r-md); padding:12px 14px; box-shadow:var(--sh-2); }
+  .map-legend .lg-title{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--tx-3); font-weight:500; margin-bottom:8px; }
+  .map-legend .lg-ramp{ height:8px; border-radius:var(--r-pill);
+    background:linear-gradient(90deg,#A9B6E6,#A8C2EA,#A6D2E0,#B3E0C2,#DCE3A8,#E8C49B,#E0A07E,#D98B6E); }
+  .map-legend .lg-scale{ display:flex; justify-content:space-between; margin-top:6px;
+    font-family:var(--ff-mono); font-size:10px; color:var(--tx-3); }
+
+  /* Hover-Popup auf der Heatmap (dunkel, Design-Guide-konform) */
+  .temp-popup .maplibregl-popup-content{ background:var(--bg-3); color:var(--tx-1); border:1px solid var(--line-2);
+    border-radius:var(--r-sm); font:500 12px/1.2 var(--ff-sans); padding:6px 10px; box-shadow:var(--sh-2); }
+  .temp-popup .maplibregl-popup-tip{ display:none; }
+  .temp-popup b{ font-weight:600; }
 
   .note{ color:var(--tx-3); font-size:12.5px; }
   .loading, .errbox{ display:flex; align-items:center; justify-content:center; min-height:200px; color:var(--tx-3); font-size:13px; gap:10px; }
@@ -277,7 +298,11 @@
     <div class="page-head">
       <div>
         <h1 class="h1">Karte</h1>
-        <div class="when">Ausgewählter Standort — Grundlage für eine spätere Temperatur-Heatmap.</div>
+        <div class="when">Aktuelle Temperaturen deutscher Städte als Heatmap — oder Detailansicht des gewählten Standorts.</div>
+      </div>
+      <div class="seg" id="map-modes" role="tablist">
+        <button class="on" data-mode="heat">Temperatur-Heatmap</button>
+        <button data-mode="standort">Standort</button>
       </div>
     </div>
     <div class="map-wrap">
@@ -288,6 +313,11 @@
           <div class="note" id="map-cond">—</div>
         </div>
         <div class="t" id="map-temp">—</div>
+      </div>
+      <div class="map-legend" id="map-legend" style="display:none;">
+        <div class="lg-title">Temperatur · aktuell</div>
+        <div class="lg-ramp"></div>
+        <div class="lg-scale"><span>−5°</span><span>10°</span><span>20°</span><span>36°</span></div>
       </div>
       <div id="map"></div>
     </div>
@@ -419,8 +449,33 @@ var CHIP_CITIES = ['Würzburg','Berlin','München','Hamburg','Köln','Frankfurt/
 
 /* ============ State + Chart-Farben (ECharts: Hex, kein oklch) ============ */
 var state = { lat:49.7913, lon:9.9534, name:'Würzburg' };
+var lastForecast=null;
 var C_TEMP='#79A6C9', C_RAIN='#5BA6DD', C_TREND='#E0705A';
 var TEMP_RAMP=['#A9B6E6','#A8C2EA','#A6D2E0','#B3E0C2','#DCE3A8','#E8C49B','#E0A07E','#D98B6E'];
+// MapLibre-Interpolation (Wert,Farbe-Paare) — identisch zur Temperatur-Skala oben
+var TEMP_STOPS=[-5,'#A9B6E6',0,'#A8C2EA',8,'#A6D2E0',14,'#B3E0C2',20,'#DCE3A8',26,'#E8C49B',31,'#E0A07E',36,'#D98B6E'];
+
+/* Städte für die Heatmap (eine Multi-Location-Abfrage an Open-Meteo) */
+var MAP_CITIES=[
+  {name:'Hamburg',lat:53.55,lon:9.99},{name:'Kiel',lat:54.32,lon:10.13},{name:'Rostock',lat:54.09,lon:12.14},
+  {name:'Schwerin',lat:53.63,lon:11.41},{name:'Flensburg',lat:54.78,lon:9.43},{name:'Lübeck',lat:53.87,lon:10.69},
+  {name:'Greifswald',lat:54.09,lon:13.38},{name:'Berlin',lat:52.52,lon:13.40},{name:'Potsdam',lat:52.39,lon:13.06},
+  {name:'Frankfurt/O',lat:52.34,lon:14.55},{name:'Cottbus',lat:51.76,lon:14.33},{name:'Leipzig',lat:51.34,lon:12.37},
+  {name:'Dresden',lat:51.05,lon:13.74},{name:'Chemnitz',lat:50.83,lon:12.92},{name:'Erfurt',lat:50.98,lon:11.03},
+  {name:'Magdeburg',lat:52.13,lon:11.63},{name:'Halle',lat:51.48,lon:11.97},{name:'Jena',lat:50.93,lon:11.59},
+  {name:'Hannover',lat:52.37,lon:9.73},{name:'Braunschweig',lat:52.27,lon:10.52},{name:'Göttingen',lat:51.53,lon:9.93},
+  {name:'Kassel',lat:51.32,lon:9.50},{name:'Paderborn',lat:51.72,lon:8.75},{name:'Köln',lat:50.93,lon:6.95},
+  {name:'Düsseldorf',lat:51.22,lon:6.78},{name:'Essen',lat:51.46,lon:7.01},{name:'Dortmund',lat:51.51,lon:7.46},
+  {name:'Münster',lat:51.96,lon:7.63},{name:'Bielefeld',lat:52.02,lon:8.53},{name:'Aachen',lat:50.78,lon:6.08},
+  {name:'Bonn',lat:50.73,lon:7.10},{name:'Wuppertal',lat:51.26,lon:7.15},{name:'Osnabrück',lat:52.28,lon:8.05},
+  {name:'Frankfurt/M',lat:50.11,lon:8.68},{name:'Wiesbaden',lat:50.08,lon:8.24},{name:'Mainz',lat:50.00,lon:8.27},
+  {name:'Mannheim',lat:49.49,lon:8.47},{name:'Karlsruhe',lat:49.00,lon:8.40},{name:'Freiburg',lat:47.99,lon:7.84},
+  {name:'Stuttgart',lat:48.78,lon:9.18},{name:'Heidelberg',lat:49.40,lon:8.69},{name:'Saarbrücken',lat:49.23,lon:7.00},
+  {name:'Trier',lat:49.75,lon:6.64},{name:'Würzburg',lat:49.79,lon:9.95},{name:'Nürnberg',lat:49.45,lon:11.08},
+  {name:'Regensburg',lat:49.01,lon:12.10},{name:'Augsburg',lat:48.37,lon:10.89},{name:'München',lat:48.14,lon:11.58},
+  {name:'Ingolstadt',lat:48.76,lon:11.42},{name:'Passau',lat:48.57,lon:13.47},{name:'Bamberg',lat:49.90,lon:10.90},
+  {name:'Bayreuth',lat:49.95,lon:11.58},{name:'Konstanz',lat:47.66,lon:9.18},{name:'Ulm',lat:48.40,lon:9.99}
+];
 
 var charts={};
 function getChart(id){ if(!charts[id]) charts[id]=echarts.init(document.getElementById(id),'dark'); return charts[id]; }
@@ -584,29 +639,124 @@ function renderUV(uv){
 /* =====================================================================
    2) KARTE — MapLibre, zentriert auf den ausgewählten Standort
    ===================================================================== */
-var map=null, mapMarker=null;
-function initMap(){
-  if(map){ map.resize(); return; }
+var map=null, mapMarker=null, mapReady=false, heatLoaded=false, mapMode='heat';
+var DE_VIEW={ center:[10.4,51.1], zoom:5.1 };   // Deutschland-Überblick
+
+function initMap(cb){
+  if(map){ if(mapReady){ map.resize(); cb&&cb(); } else map.once('load', function(){ cb&&cb(); }); return; }
   try{
     map=new maplibregl.Map({
       container:'map',
-      style:'https://api.maptiler.com/maps/dataviz-dark/style.json?key=OUi1wI9hnNySlTDH9fHe',
-      center:[state.lon, state.lat], zoom:11
+      // Key-freie dunkle Basemap (CARTO Dark Matter, OpenStreetMap-Daten) — kein API-Key nötig
+      style:{
+        version:8,
+        sources:{ 'carto-dark':{ type:'raster', tileSize:256,
+          tiles:[
+            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          ],
+          attribution:'© OpenStreetMap-Mitwirkende © CARTO' } },
+        layers:[{ id:'carto-dark', type:'raster', source:'carto-dark' }]
+      },
+      center:DE_VIEW.center, zoom:DE_VIEW.zoom
     });
     map.addControl(new maplibregl.NavigationControl({showCompass:false}), 'top-right');
     mapMarker=new maplibregl.Marker({color:'#79A6C9'}).setLngLat([state.lon, state.lat]).addTo(map);
+    mapMarker.getElement().style.display='none';   // im Heatmap-Modus zunächst verborgen
+    map.on('load', function(){ mapReady=true; cb&&cb(); });
   }catch(e){
     document.getElementById('map').innerHTML='<div class="errbox" style="height:100%">Karte konnte nicht geladen werden.</div>';
   }
 }
+
+/* Karte öffnen: initialisieren → Heatmap-Daten sicherstellen → aktuellen Modus anwenden */
+function openMap(){
+  initMap(function(){ map.resize(); ensureHeatData().then(function(){ setMapMode(mapMode); }); });
+}
+
+/* EINE Multi-Location-Abfrage für alle Städte → GeoJSON-Features */
+async function fetchMapTemps(){
+  var lat=MAP_CITIES.map(function(c){return c.lat;}).join(',');
+  var lon=MAP_CITIES.map(function(c){return c.lon;}).join(',');
+  var url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon
+    +'&current=temperature_2m,weather_code,is_day&timezone=auto';
+  var r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
+  var arr=await r.json();
+  if(!Array.isArray(arr)) arr=[arr];      // bei nur 1 Koordinate liefert OM ein Objekt
+  var feats=[];
+  for(var i=0;i<arr.length;i++){
+    var c=MAP_CITIES[i], cur=arr[i]&&arr[i].current;
+    if(!c||!cur||cur.temperature_2m==null) continue;
+    feats.push({ type:'Feature', geometry:{ type:'Point', coordinates:[c.lon, c.lat] },
+      properties:{ name:c.name, temp:Math.round(cur.temperature_2m*10)/10 } });
+  }
+  return feats;
+}
+
+async function ensureHeatData(){
+  if(heatLoaded) return;
+  try{ buildHeatLayers(await fetchMapTemps()); heatLoaded=true; }
+  catch(e){ console.warn('Heatmap:', e.message); }
+}
+
+function buildHeatLayers(features){
+  var data={ type:'FeatureCollection', features:features };
+  if(map.getSource('citytemps')){ map.getSource('citytemps').setData(data); return; }
+  map.addSource('citytemps',{ type:'geojson', data:data });
+  // weiche Wärme-Kreise (Tönung, nie Fläche) — Farbe interpoliert über die Temperatur-Skala
+  map.addLayer({ id:'temp-heat', type:'circle', source:'citytemps', paint:{
+    'circle-radius':['interpolate',['linear'],['zoom'], 4,15, 6,30, 9,46],
+    'circle-color':['interpolate',['linear'],['get','temp']].concat(TEMP_STOPS),
+    'circle-opacity':0.5, 'circle-blur':0.6 } });
+  // heller Kern-Punkt
+  map.addLayer({ id:'temp-core', type:'circle', source:'citytemps', paint:{
+    'circle-radius':3.2, 'circle-color':'#F2F2F4', 'circle-stroke-color':'rgba(11,11,13,.55)', 'circle-stroke-width':1 } });
+  // Hover-Popup: Stadt + Temperatur
+  var popup=new maplibregl.Popup({ closeButton:false, closeOnClick:false, offset:12, className:'temp-popup' });
+  map.on('mouseenter','temp-heat', function(e){
+    map.getCanvas().style.cursor='pointer';
+    var f=e.features[0];
+    popup.setLngLat(f.geometry.coordinates).setHTML('<b>'+esc(f.properties.name)+'</b> '+f.properties.temp+'°').addTo(map);
+  });
+  map.on('mousemove','temp-heat', function(e){ if(e.features[0]) popup.setLngLat(e.features[0].geometry.coordinates); });
+  map.on('mouseleave','temp-heat', function(){ map.getCanvas().style.cursor=''; popup.remove(); });
+}
+
+function setHeatVisible(v){
+  ['temp-heat','temp-core'].forEach(function(id){
+    if(map.getLayer(id)) map.setLayoutProperty(id,'visibility', v?'visible':'none'); });
+}
+
+function setMapMode(mode){
+  mapMode=mode;
+  document.querySelectorAll('#map-modes button').forEach(function(b){ b.classList.toggle('on', b.dataset.mode===mode); });
+  var legend=document.getElementById('map-legend');
+  if(mode==='heat'){
+    legend.style.display='block';
+    document.getElementById('map-badge').style.display='none';
+    if(mapMarker) mapMarker.getElement().style.display='none';
+    setHeatVisible(true);
+    map.flyTo({ center:DE_VIEW.center, zoom:DE_VIEW.zoom, essential:true });
+  }else{
+    legend.style.display='none';
+    if(mapMarker){ mapMarker.getElement().style.display=''; mapMarker.setLngLat([state.lon, state.lat]); }
+    setHeatVisible(false);
+    if(lastForecast) updateMapBadge(lastForecast);
+    map.flyTo({ center:[state.lon, state.lat], zoom:11, essential:true });
+  }
+}
+
 function recenterMap(){ if(!map) return; map.flyTo({center:[state.lon, state.lat], zoom:11, essential:true}); if(mapMarker) mapMarker.setLngLat([state.lon, state.lat]); }
+
 function updateMapBadge(d){
+  lastForecast=d;
   var c=d.current, w=wmo(c.weather_code, c.is_day);
   document.getElementById('map-city').textContent=state.name;
   document.getElementById('map-cond').textContent=w.label;
   document.getElementById('map-temp').textContent=Math.round(c.temperature_2m)+'°';
   document.getElementById('map-ic').innerHTML=window.iconSVG(w.icon);
-  document.getElementById('map-badge').style.display='flex';
+  document.getElementById('map-badge').style.display=(mapMode==='standort')?'flex':'none';
 }
 
 /* =====================================================================
@@ -712,7 +862,7 @@ function renderHeatmap(byYM, years){
 function switchTab(name){
   document.querySelectorAll('#tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab===name); });
   ['forecast','map','climate'].forEach(function(t){ document.getElementById('tab-'+t).classList.toggle('on', t===name); });
-  if(name==='map'){ setTimeout(function(){ initMap(); recenterMap(); }, 40); }
+  if(name==='map'){ setTimeout(openMap, 40); }
   if(name==='climate'){ loadClimate(false); setTimeout(function(){
     ['trend-chart','deviation-chart','heatmap-chart'].forEach(function(id){ if(charts[id]) charts[id].resize(); }); }, 40); }
   if(name==='forecast'){ setTimeout(function(){
@@ -723,7 +873,8 @@ function selectCity(c){
   state.lat=c.lat; state.lon=c.lon; state.name=c.name;
   renderChips(); loadForecast(); climateLoadedFor=null;
   if(document.getElementById('tab-climate').classList.contains('on')) loadClimate(true);
-  if(map) recenterMap();
+  // im Standort-Modus zur Stadt fliegen; im Heatmap-Modus nur den (verborgenen) Marker nachziehen
+  if(map){ if(mapMode==='standort') recenterMap(); else if(mapMarker) mapMarker.setLngLat([state.lon, state.lat]); }
 }
 
 function renderChips(){
@@ -737,24 +888,56 @@ function renderChips(){
   });
 }
 
+function esc(s){ return String(s).replace(/[&<>"']/g, function(m){
+  return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]; }); }
+
+/* Live-Suche über Open-Meteo Geocoding — findet auch Dörfer/Kleinstädte (kein Key) */
 function setupSearch(){
   var inp=document.getElementById('city-search'), sug=document.getElementById('suggest');
-  inp.addEventListener('input', function(){
-    var q=inp.value.trim().toLowerCase(); if(!q){ sug.classList.remove('open'); return; }
-    var list=CITIES.filter(function(c){ return c.name.toLowerCase().indexOf(q)>=0; }).slice(0,8);
-    if(!list.length){ sug.classList.remove('open'); return; }
-    sug.innerHTML=list.map(function(c){ return '<div data-lat="'+c.lat+'" data-lon="'+c.lon+'" data-name="'+c.name+'">'+c.name+'</div>'; }).join('');
+  var timer=null, reqId=0;
+  function hide(){ sug.classList.remove('open'); }
+
+  function show(list){
+    if(!list.length){ sug.innerHTML='<div class="empty">Kein Ort gefunden</div>'; sug.classList.add('open'); return; }
+    sug.innerHTML=list.map(function(c){
+      var sub=[c.admin1, (c.country_code&&c.country_code!=='DE')?c.country:''].filter(Boolean).join(' · ');
+      return '<div data-lat="'+c.latitude+'" data-lon="'+c.longitude+'" data-name="'+esc(c.name)+'">'
+        +'<span class="nm">'+esc(c.name)+'</span>'+(sub?'<span class="rg">'+esc(sub)+'</span>':'')+'</div>';
+    }).join('');
     sug.classList.add('open');
-    sug.querySelectorAll('div').forEach(function(el){
-      el.onclick=function(){ selectCity({name:el.dataset.name, lat:+el.dataset.lat, lon:+el.dataset.lon}); inp.value=''; sug.classList.remove('open'); };
+    sug.querySelectorAll('div[data-name]').forEach(function(el){
+      el.onclick=function(){ selectCity({name:el.dataset.name, lat:+el.dataset.lat, lon:+el.dataset.lon}); inp.value=''; hide(); };
     });
+  }
+
+  async function search(q){
+    var my=++reqId;
+    try{
+      var r=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=8&language=de&format=json');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      var d=await r.json();
+      if(my!==reqId) return;                 // veraltete Antwort verwerfen (Race)
+      show(d.results||[]);
+    }catch(e){ if(my===reqId) hide(); }
+  }
+
+  inp.addEventListener('input', function(){
+    var q=inp.value.trim();
+    clearTimeout(timer);
+    if(q.length<2){ hide(); return; }
+    timer=setTimeout(function(){ search(q); }, 250);   // Debounce
   });
-  inp.addEventListener('keydown', function(e){ if(e.key==='Escape') sug.classList.remove('open'); });
-  document.addEventListener('click', function(e){ if(!e.target.closest('.input')) sug.classList.remove('open'); });
+  inp.addEventListener('keydown', function(e){ if(e.key==='Escape') hide(); });
+  document.addEventListener('click', function(e){ if(!e.target.closest('.input')) hide(); });
 }
 
 /* ============ Init ============ */
 document.querySelectorAll('#tabs button').forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.tab); }; });
+document.querySelectorAll('#map-modes button').forEach(function(b){ b.onclick=function(){
+  mapMode=b.dataset.mode;
+  document.querySelectorAll('#map-modes button').forEach(function(x){ x.classList.toggle('on', x.dataset.mode===mapMode); });
+  if(map&&mapReady) setMapMode(mapMode);
+}; });
 window.addEventListener('resize', function(){ Object.keys(charts).forEach(function(id){ charts[id].resize(); }); if(map) map.resize(); });
 
 window.paintIcons();

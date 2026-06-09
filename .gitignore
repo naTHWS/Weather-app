@@ -5,5 +5,8 @@ __pycache__/
 .env
 01_Fwpm-Desingguide.make
 
+# Große Binär-/NetCDF-Daten gehören nicht ins Repo
+*.nc
+
 # Backup des alten kompilierten Figma-Make-Exports (nicht versionieren)
 _figma-make-export.index.html.bak
