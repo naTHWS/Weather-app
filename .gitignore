@@ -4,3 +4,6 @@ __pycache__/
 *.bak
 .env
 01_Fwpm-Desingguide.make
+
+# Backup des alten kompilierten Figma-Make-Exports (nicht versionieren)
+_figma-make-export.index.html.bak

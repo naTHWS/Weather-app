@@ -1,0 +1,20 @@
+07.06.2026 --> Fixes 
+    - Vorhersage Tab:
+        - die einzelnen themplate cards sind immernoch im falschen Desing Guide gehalten und müssen angepasst werden nach dem desing guide 
+        - die einzelnen icons sind nicht passend nac dem @Desing Guide 
+        - in der 7-Tage vorschau werden die Tage mit heute und morgen betittelt was ich für falsch halte ich denke das sollte durhgehend mit den wochentagen beschrieben werden 
+        - Der Temperaturverlauf sollte mit der akteullen themperatur übereinstimmen und nicht bei der aktuellen uhrzeit eine andere themperatur anzeigen als die große übersicht 
+        - die Tabelle des Niederschalgst hat keine einehiten man kann die niederschalgsmenge also kaum abschätzen (besser wäre es wenn die Niederschalgsmenge in l/qm angeben wird wie bei offiziellen wetterseiten auch)
+        - die allgemeine farbdarstellung der seite ist absoluter müll man kann kein richtiges system oder eine desingsprache erkennen 
+
+    - Karte Tab:
+        - dort sind einige informationen direkt oben in der themplate falsch geschrieben und komplett auserhalb des kotextes 
+        --> es sollte darauf geachet werden nur infos darzustellen die auch direkt umgesetzt oder verwendet werden
+        - dieses erste themplate über der karte ist also erstmal komplett zu entfernen 
+        - die karte soll anschließend die standt vorausgewählt haben die oben in der leiste ausgewählt wurde standartmäßig ist das würzbrug 
+        - im späteren verlauf soll die karte als grundlage für eine heatmap dienen 
+
+    - Klimaanalyse Tab:
+        - dort sollte die Api verknüfung wieder hergestellt werde die api ist eine öffentliche datenbank an klimadaten sie sollte also kein backend benötgen 
+        --> damit sollten die grafiken auch einzeln wieder funktionieren 
+        - die themplate mit der heatmap muss noch überarbeitet werden da muss ich noch eien referenz suchen um die heatmap besser ab zu bilden 
