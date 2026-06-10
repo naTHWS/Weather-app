@@ -6,13 +6,22 @@
             - wie ist alles aufgebaut macht das sinn?
             - sind die bennenungen der datein sinnvoll
             - giebt es daten die veraltet sind die gelöscht werden können 
-            - 
+        - ich habe noch ein Bild im Projektordern EIngefügt @09.06.2026-Ausrichtung Dashboard.jpeg wie das alles etwas besser aufgebaut sein sollte 
 
 
     - Vorhersage TAB:
-        -
+        - die carte mit den allgemeinen daten sieht ok aus 
+        - die carte mti der 7 Tage Vorhersage funktioniert leider nicht hier kann man die einzelnen Tage leider nicht anklciken damit sich die neuen daten übertragen 
+        - allgemein die gestaltung der restlichen carten mit ausnahme der allgemeinen also ersten carte sind alle etwas unübersichtlich
+            --> bedeuetet die farbliche darstellung ist zu eintönig trotz desingguide ist das ncith ganz in ordnung als bsp. der UV-Index sollte eher in einer geraden mit einem grün rot verlauf dargestellt werden so wie das bei der heatmap ganz unten ist 
+        - die größen der carten ist immer unterschiedlich und passt oft nciht zusammen wenn das fenster breiter wird es sind komische abstände vorhadnen und das ganze sieht nciht passend aus wenn kanten nicht passen 
+        - der themperaturverlauf erneuert sich immer erst zu vollen stunde evtl kann man ihn etwas dynamischer gestalten das er immer bei 35 minuten weiter springt 
 
+    - Karte TAB:
+        - die karte sieht super aus aber leider werden die themperaturen nur in kleinen punkten angegeben ganz unübersichtlich ich habe unten mal einen code gezeigt der eine ganz gute karte als beispiel darstellt
+        - der rest des TAB ist wirklich sehr gut gerne einfach so lassen 
 
+    
 # hier eine mögliche python karte 
 from ipyleaflet.velocity import Velocity
 import xarray as xr
@@ -39,12 +48,5 @@ wind = Velocity(data=ds,
                 max_velocity=20)
 m.add(wind)
 
-m
-
-
-in der html darf auf keinen fall die daten vorhanden sein 
-
-
-
----> Meta ebene wie sind man ran gegangen welche tools welche einschränkungen welche probleme reflektion ... nicht rein den code erklären 
---> welxche rolle spielt der mensch denn dabei was war das problem bei allem 
+    - Klimaanalyse TAB:
+        - heir sieht auch alles super aus eine kleine anpassung bei der Jahresmittel carte unten steht Jahresmittel und 10-jahres-Trend und davor sind fabrige buttons was toll ist aber die farber der buttons sollte auch den farben der linien in der grafik passen 

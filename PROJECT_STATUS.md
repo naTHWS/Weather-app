@@ -9,7 +9,7 @@
 ---
 
 ## PHASE 1: Prototyping (Streamlit)
-*Zeitraum: Anfang Mai 2024*
+
 
 ### 1. Übersicht
 In der ersten Phase wurde ein schneller Prototyp mit dem Streamlit-Framework erstellt. Ziel war es, die Wetterdaten der Open-Meteo API für Würzburg grundlegend zu visualisieren.
@@ -17,7 +17,6 @@ In der ersten Phase wurde ein schneller Prototyp mit dem Streamlit-Framework ers
 ---
 
 ## PHASE 2: Refactoring & Modernisierung (Decoupled Web-App)
-*Zeitraum: Mitte Mai 2024*
 
 ### 1. Übersicht
 Das Projekt wurde grundlegend umgestaltet, um eine professionelle Trennung von Backend und Frontend zu erreichen.
@@ -32,7 +31,6 @@ Das Projekt wurde grundlegend umgestaltet, um eine professionelle Trennung von B
 ---
 
 ## PHASE 3: Akademische Datenanalyse (DWD & Trends)
-*Zeitraum: Ende Mai 2024 (Aktuell)*
 
 ### 1. Übersicht
 In dieser Phase liegt der Fokus auf der Erfüllung der akademischen Anforderungen: Analyse historischer Wetterdaten zur Identifikation von Klimatrends. Weg von reinen Vorhersagen, hin zur statistischen Auswertung offizieller DWD-Daten.

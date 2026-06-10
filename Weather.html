@@ -108,7 +108,7 @@
   .span-12{ grid-column:span 12; }
   @media (max-width:920px){ .span-3,.span-4,.span-5,.span-6,.span-7,.span-8{ grid-column:span 12; } }
 
-  .card{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:22px; }
+  .card{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:8px; }
   .card .lbl{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--tx-3);
     font-weight:500; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; }
   .card .lbl .meta{ color:var(--tx-4); font-family:var(--ff-mono); letter-spacing:.05em; text-transform:none; }
@@ -190,6 +190,45 @@
 
   footer{ margin-top:64px; padding-top:24px; border-top:1px solid var(--line-1);
     display:flex; justify-content:space-between; color:var(--tx-3); font-size:12px; font-family:var(--ff-mono); flex-wrap:wrap; gap:8px; }
+
+  /* =====================================================================
+     09.06 Feinschliff — Layout-Konsistenz, UV-Skala, klickbare Tage
+     ===================================================================== */
+  .grid{ align-items:stretch; }
+  /* Hero füllt seine Spalte, sodass die Unterkante mit dem rechten Block bündig ist */
+  .span-4.stretch{ display:flex; }
+  .span-4.stretch > .hero{ flex:1; display:flex; flex-direction:column; }
+  .hero .st{ margin-top:auto; padding-top:18px; }
+  /* Metric-Karten gleiche Höhe, Fuß bündig unten */
+  .card.metric{ display:flex; flex-direction:column; }
+  .card.metric .foot{ margin-top:auto; }
+  /* kompaktere 7-Tage-Karten (laut Referenzbild "zu groß") */
+  .day{ padding:12px 8px; cursor:pointer; }
+  .day .d{ margin-bottom:8px; }
+  .day .ic{ margin-bottom:8px; }
+  .day .t{ font-size:17px; }
+  .day.sel{ background:var(--bg-2); border-color:var(--ac-line); box-shadow:inset 0 0 0 1px var(--ac-line); }
+  /* kompaktere Diagramme */
+  .chart{ height:240px; }
+  .chart.short{ height:150px; }
+  /* UV-Index als horizontale Grün→Rot-Skala (analog Heatmap) */
+  .uvbar{ position:relative; height:14px; margin-top:8px; }
+  .uvbar-track{ position:absolute; inset:0; border-radius:var(--r-pill);
+    background:linear-gradient(90deg,#3FA46B 0%,#8FBE4C 26%,#E6C24A 50%,#E08A43 74%,#CE544B 100%); }
+  .uvbar-knob{ position:absolute; top:50%; left:0; width:16px; height:16px; border-radius:50%;
+    background:#F2F2F4; border:2px solid var(--bg-1);
+    box-shadow:0 0 0 1px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.5);
+    transform:translate(-50%,-50%); transition:left .35s ease; }
+  .uvbar-scale{ display:flex; justify-content:space-between; margin-top:8px;
+    font-family:var(--ff-mono); font-size:10px; color:var(--tx-3); }
+  /* Vorhersage v2 — Kennzahlen-Sidebar, größerer Verlauf, Tages-Regenwahrscheinlichkeit */
+  .metric-stack{ display:flex; flex-direction:column; gap:16px; height:100%; }
+  .metric-stack > .card{ flex:1; }
+  .fc-chart-card{ height:440px; display:flex; flex-direction:column; }
+  #temp-chart{ flex:1; height:auto; min-height:0; }
+  @media (max-width:920px){ .metric-stack, .fc-chart-card{ height:auto; } #temp-chart{ height:300px; } }
+  .day-row{ align-content:center; }
+  .day .pp{ font-size:11px; color:#5BA6DD; margin-top:6px; font-family:var(--ff-mono); min-height:14px; }
 </style>
 </head>
 <body>
@@ -204,6 +243,8 @@
         <div class="sub">Open-Meteo · DWD-Modell</div>
       </div>
     </div>
+
+    <span class="spacer"></span>
 
     <div class="seg" id="tabs" role="tablist">
       <button class="on" data-tab="forecast">Vorhersage</button>
@@ -222,8 +263,8 @@
     <div class="status"><span class="d" id="status-dot"></span><span id="status-text">lädt…</span></div>
   </header>
 
-  <!-- Schnellauswahl Städte -->
-  <div class="chip-row" id="city-chips" style="margin-bottom:28px;"></div>
+  <!-- Stadt-Schnellauswahl (Chips) entfernt – siehe Referenzbild 09.06.2026 -->
+  <div style="height:8px;"></div>
 
   <!-- ================= TAB: VORHERSAGE ================= -->
   <section class="tab on" id="tab-forecast">
@@ -235,55 +276,49 @@
     </div>
 
     <div class="grid">
-      <div class="span-4">
+      <!-- Reihe 1: Aktueller Zustand + 7-Tage-Ausblick -->
+      <div class="span-4 stretch">
         <div class="hero" id="hero"><div class="loading"><span class="spin"></span> lade Wetter…</div></div>
       </div>
-
       <div class="span-8">
-        <div class="card" style="margin-bottom:16px;">
-          <div class="lbl">7-Tage-Vorhersage <span class="meta">daily</span></div>
-          <div class="day-row" id="days"></div>
+        <div class="card" style="height:100%; display:flex; flex-direction:column;">
+          <div class="lbl">7-Tage-Vorhersage <span class="meta">Tagestief / -hoch · Regen %</span></div>
+          <div class="day-row" id="days" style="flex:1;"></div>
         </div>
-        <div class="card">
+      </div>
+
+      <!-- Reihe 2: Temperaturverlauf + Kennzahlen-Sidebar -->
+      <div class="span-8">
+        <div class="card fc-chart-card">
           <div class="lbl">Temperaturverlauf <span class="meta" id="temp-meta">48 h · °C</span></div>
           <div class="chart" id="temp-chart"></div>
         </div>
       </div>
-
       <div class="span-4">
-        <div class="card metric">
-          <div class="head"><div class="t">Windgeschwindigkeit</div><div class="sub" id="wind-sub">—</div></div>
-          <div class="bars" id="wind-bars"></div>
-          <div class="foot"><span class="v" style="color:var(--tx-1); font-size:15px; font-weight:600;" id="wind-val">—</span><span id="wind-dir">—</span></div>
-        </div>
-      </div>
-      <div class="span-4">
-        <div class="card metric">
-          <div class="head"><div class="t">UV-Index</div><div class="sub" id="uv-sub">heute max</div></div>
-          <div class="gauge">
-            <svg viewBox="0 0 170 96">
-              <path d="M12 86 A73 73 0 0 1 158 86" fill="none" stroke="#23232B" stroke-width="10" stroke-linecap="round"/>
-              <path id="uv-arc" d="" fill="none" stroke="var(--ac)" stroke-width="10" stroke-linecap="round"/>
-              <circle id="uv-knob" cx="12" cy="86" r="5" fill="#F2F2F4"/>
-            </svg>
+        <div class="metric-stack">
+          <div class="card metric">
+            <div class="head"><div class="t">Wind</div><div class="sub" id="wind-sub">—</div></div>
+            <div class="bars" id="wind-bars"></div>
+            <div class="foot"><span style="color:var(--tx-1); font-size:16px; font-weight:600;" id="wind-val">—</span><span id="wind-dir">—</span></div>
           </div>
-          <div style="text-align:center; margin-top:-6px;">
-            <span style="font-size:26px; font-weight:600; letter-spacing:-0.02em;" id="uv-val">—</span>
-            <span style="color:var(--tx-3); font-size:12px;" id="uv-cat"></span>
+          <div class="card metric">
+            <div class="head"><div class="t">UV-Index</div><div class="sub" id="uv-sub">heute max</div></div>
+            <div class="uvbar"><div class="uvbar-track"></div><div class="uvbar-knob" id="uv-knob"></div></div>
+            <div class="uvbar-scale"><span>0</span><span>3</span><span>6</span><span>8</span><span>11+</span></div>
+            <div class="foot"><span style="color:var(--tx-1); font-size:22px; font-weight:600; letter-spacing:-0.02em;" id="uv-val">—</span><span id="uv-cat">—</span></div>
           </div>
-        </div>
-      </div>
-      <div class="span-4">
-        <div class="card metric">
-          <div class="head"><div class="t">Luftfeuchtigkeit</div><div class="sub">aktuell</div></div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-            <div class="v" id="hum-val">—<span class="u">%</span></div>
-            <span class="wi" style="width:46px;height:46px" data-wicon="humidity"></span>
+          <div class="card metric">
+            <div class="head"><div class="t">Luftfeuchtigkeit</div><div class="sub">aktuell</div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+              <div class="v" id="hum-val">—<span class="u">%</span></div>
+              <span class="wi" style="width:40px;height:40px" data-wicon="humidity"></span>
+            </div>
+            <div class="foot" id="hum-foot">Sicht: —</div>
           </div>
-          <div class="foot" id="hum-foot">Sicht: —</div>
         </div>
       </div>
 
+      <!-- Reihe 3: Niederschlag -->
       <div class="span-12">
         <div class="card">
           <div class="lbl">Niederschlag <span class="meta">mm = l/m² · 48 h</span></div>
@@ -449,7 +484,7 @@ var CHIP_CITIES = ['Würzburg','Berlin','München','Hamburg','Köln','Frankfurt/
 
 /* ============ State + Chart-Farben (ECharts: Hex, kein oklch) ============ */
 var state = { lat:49.7913, lon:9.9534, name:'Würzburg' };
-var lastForecast=null;
+var lastForecast=null, selDay=0;
 var C_TEMP='#79A6C9', C_RAIN='#5BA6DD', C_TREND='#E0705A';
 var TEMP_RAMP=['#A9B6E6','#A8C2EA','#A6D2E0','#B3E0C2','#DCE3A8','#E8C49B','#E0A07E','#D98B6E'];
 // MapLibre-Interpolation (Wert,Farbe-Paare) — identisch zur Temperatur-Skala oben
@@ -510,13 +545,13 @@ async function loadForecast(){
     +'&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,'
     +'wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,uv_index'
     +'&hourly=temperature_2m,precipitation,weather_code,visibility,wind_speed_10m'
-    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max'
+    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max'
     +'&timezone=auto&forecast_days=7';
   try{
     var r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
     var d=await r.json();
     setStatus(true,'Daten geladen · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}));
-    renderHero(d); renderDays(d); renderTempChart(d); renderPrecipChart(d); renderMetrics(d); updateMapBadge(d);
+    selDay=0; renderHero(d); renderDays(d); renderTempChart(d); renderPrecipChart(d); renderMetrics(d); updateMapBadge(d);
   }catch(e){
     setStatus(false,'Fehler: '+e.message);
     document.getElementById('hero').innerHTML='<div class="errbox">Wetterdaten konnten nicht geladen werden.<br>'+e.message+'</div>';
@@ -553,30 +588,68 @@ function renderDays(d){
   for(var i=0;i<t.time.length;i++){
     var wd=new Date(t.time[i]+'T12:00').toLocaleDateString('de-DE',{weekday:'short'});
     var w=wmo(t.weather_code[i], true);
-    html+='<div class="day"><div class="d">'+wd+'</div>'
-      +'<div class="ic"><span class="wi" style="width:30px;height:30px">'+window.iconSVG(w.icon)+'</span></div>'
-      +'<div class="t">'+Math.round(t.temperature_2m_max[i])+'°<span class="lo">'+Math.round(t.temperature_2m_min[i])+'°</span></div></div>';
+    var pp=(t.precipitation_probability_max&&t.precipitation_probability_max[i]!=null)?t.precipitation_probability_max[i]:null;
+    html+='<div class="day'+(i===selDay?' sel':'')+'" data-i="'+i+'" role="button" tabindex="0" title="Details anzeigen"><div class="d">'+wd+'</div>'
+      +'<div class="ic"><span class="wi" style="width:26px;height:26px">'+window.iconSVG(w.icon)+'</span></div>'
+      +'<div class="t">'+Math.round(t.temperature_2m_max[i])+'°<span class="lo">'+Math.round(t.temperature_2m_min[i])+'°</span></div>'
+      +'<div class="pp">'+(pp!=null?pp+'%':'')+'</div></div>';
   }
   box.innerHTML=html;
+  box.querySelectorAll('.day').forEach(function(el){
+    el.onclick=function(){ selectDay(d, +el.dataset.i); };
+    el.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); selectDay(d, +el.dataset.i); } };
+  });
 }
 
-function nowHourIndex(times, currentTime){
-  var ref=new Date(currentTime||Date.now());
+/* Klick auf einen Tag: Übersichtskarte (Hero) auf diesen Tag umstellen; Tag 0 = Live-Daten */
+function selectDay(d, i){
+  selDay=i;
+  document.querySelectorAll('#days .day').forEach(function(el){ el.classList.toggle('sel', +el.dataset.i===i); });
+  if(i===0) renderHero(d); else renderHeroDay(d, i);
+}
+
+function renderHeroDay(d, i){
+  var day=d.daily, w=wmo(day.weather_code[i], true), hero=document.getElementById('hero');
+  hero.style.setProperty('--ct', w.tint[0]); hero.style.setProperty('--cb', w.tint[1]);
+  var dt=new Date(day.time[i]+'T12:00');
+  var sr=new Date(day.sunrise[i]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  var ss=new Date(day.sunset[i]).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  var uv=(day.uv_index_max&&day.uv_index_max[i]!=null)?day.uv_index_max[i].toFixed(1):'—';
+  hero.innerHTML=
+    '<div class="top"><span>'+dt.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'})+'</span>'
+    +'<span class="mono">Vorhersage</span></div>'
+    +'<span class="wi ic">'+window.iconSVG(w.icon)+'</span>'
+    +'<div class="cond">'+w.label+'</div>'
+    +'<div class="temp">'+Math.round(day.temperature_2m_max[i])+'<span class="deg">°C</span></div>'
+    +'<div class="st">'
+      +'<div class="r"><span class="k">Tagestief</span><span class="v">'+Math.round(day.temperature_2m_min[i])+'°</span></div>'
+      +'<div class="r"><span class="k">Sonnenaufg.</span><span class="v">'+sr+'</span></div>'
+      +'<div class="r"><span class="k">UV max</span><span class="v">'+uv+'</span></div>'
+      +'<div class="r"><span class="k">Sonnenunt.</span><span class="v">'+ss+'</span></div>'
+    +'</div>';
+}
+
+/* Aktueller Zeit-Slot im Stundenraster. Ab Minute 35 springt der Marker auf die
+   nächste Stunde, damit der Verlauf nicht nur zur vollen Stunde "aktuell" wirkt. */
+function currentSlot(times){
+  var ref=new Date(), base=-1;
   for(var i=0;i<times.length;i++){
     var dt=new Date(times[i]);
-    if(dt.getHours()===ref.getHours() && dt.toDateString()===ref.toDateString()) return i;
+    if(dt.getHours()===ref.getHours() && dt.toDateString()===ref.toDateString()){ base=i; break; }
   }
-  return -1;
+  if(base<0) return { idx:-1, advanced:false };
+  var advance = ref.getMinutes()>=35 && base+1<times.length;
+  return { idx: advance ? base+1 : base, advanced: advance };
 }
 
 function renderTempChart(d){
   var h=d.hourly, n=48, times=h.time.slice(0,n), temps=h.temperature_2m.slice(0,n);
   var labels=times.map(function(t){ var dt=new Date(t);
     return dt.getHours()===0 ? dt.toLocaleDateString('de-DE',{weekday:'short'}) : dt.getHours()+':00'; });
-  var nowIdx=nowHourIndex(times, d.current.time);
-  // Konsistenz: Punkt auf der Linie zeigt EXAKT die Hero-Temperatur (Fix 07.06)
-  var nowTemp=Math.round(d.current.temperature_2m);
-  document.getElementById('temp-meta').textContent='48 h · jetzt '+nowTemp+'°';
+  var slot=currentSlot(times), nowIdx=slot.idx;
+  // Marker auf aktueller Stunde; ab Minute 35 auf der kommenden Stunde (Fix 09.06)
+  var nowTemp = slot.advanced ? Math.round(temps[nowIdx]) : Math.round(d.current.temperature_2m);
+  document.getElementById('temp-meta').textContent='48 h · '+(slot.advanced?'ab ':'jetzt ')+nowTemp+'°';
   getChart('temp-chart').setOption(Object.assign({}, baseChart, {
     xAxis:Object.assign({ type:'category', data:labels, boundaryGap:false }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, interval:5 } }),
     yAxis:Object.assign({ type:'value', scale:true }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, formatter:'{value}°' } }),
@@ -585,7 +658,7 @@ function renderTempChart(d){
       areaStyle:{ color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(121,166,201,.28)'},{offset:1,color:'rgba(121,166,201,0)'}]) },
       markPoint: nowIdx>=0 ? { symbol:'circle', symbolSize:9,
         data:[{ coord:[nowIdx, nowTemp], value:nowTemp, itemStyle:{ color:'#F2F2F4', borderColor:C_TEMP, borderWidth:2 } }],
-        label:{ show:true, formatter:'jetzt '+nowTemp+'°', position:'top', color:'#F2F2F4', fontSize:11 } } : undefined,
+        label:{ show:true, formatter:(slot.advanced?'ab ':'jetzt ')+nowTemp+'°', position:'top', color:'#F2F2F4', fontSize:11 } } : undefined,
       markLine: nowIdx>=0 ? { silent:true, symbol:'none', data:[{ xAxis:nowIdx }], lineStyle:{ color:'#2A2A33', type:'dashed' } } : undefined
     }]
   }), true);
@@ -628,12 +701,9 @@ function renderMetrics(d){
 function renderUV(uv){
   uv=uv||0;
   document.getElementById('uv-val').textContent=uv.toFixed(1);
-  document.getElementById('uv-cat').textContent=' '+(uv<3?'niedrig':uv<6?'moderat':uv<8?'hoch':uv<11?'sehr hoch':'extrem');
-  var frac=Math.max(0,Math.min(1, uv/11)), cx=85, cy=86, R=73, ang=Math.PI*(1-frac);
-  var x=cx+R*Math.cos(ang), y=cy-R*Math.sin(ang);
-  document.getElementById('uv-arc').setAttribute('d', frac<=0?'':'M12 86 A73 73 0 0 1 '+x.toFixed(1)+' '+y.toFixed(1));
-  document.getElementById('uv-knob').setAttribute('cx', x.toFixed(1));
-  document.getElementById('uv-knob').setAttribute('cy', y.toFixed(1));
+  document.getElementById('uv-cat').textContent=(uv<3?'niedrig':uv<6?'moderat':uv<8?'hoch':uv<11?'sehr hoch':'extrem');
+  var frac=Math.max(0,Math.min(1, uv/11));
+  document.getElementById('uv-knob').style.left=(frac*100).toFixed(1)+'%';
 }
 
 /* =====================================================================
@@ -650,6 +720,7 @@ function initMap(cb){
       // Key-freie dunkle Basemap (CARTO Dark Matter, OpenStreetMap-Daten) — kein API-Key nötig
       style:{
         version:8,
+        glyphs:'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
         sources:{ 'carto-dark':{ type:'raster', tileSize:256,
           tiles:[
             'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -712,6 +783,12 @@ function buildHeatLayers(features){
   // heller Kern-Punkt
   map.addLayer({ id:'temp-core', type:'circle', source:'citytemps', paint:{
     'circle-radius':3.2, 'circle-color':'#F2F2F4', 'circle-stroke-color':'rgba(11,11,13,.55)', 'circle-stroke-width':1 } });
+  // gut lesbares Temperatur-Label je Stadt (statt nur winziger Punkte)
+  map.addLayer({ id:'temp-label', type:'symbol', source:'citytemps',
+    layout:{ 'text-field':['concat',['to-string',['get','temp']],'°'],
+      'text-font':['Open Sans Bold'], 'text-size':13, 'text-offset':[0,-1.5],
+      'text-anchor':'bottom', 'text-allow-overlap':false, 'text-padding':6 },
+    paint:{ 'text-color':'#F2F2F4', 'text-halo-color':'rgba(11,11,13,.92)', 'text-halo-width':1.6 } });
   // Hover-Popup: Stadt + Temperatur
   var popup=new maplibregl.Popup({ closeButton:false, closeOnClick:false, offset:12, className:'temp-popup' });
   map.on('mouseenter','temp-heat', function(e){
@@ -724,7 +801,7 @@ function buildHeatLayers(features){
 }
 
 function setHeatVisible(v){
-  ['temp-heat','temp-core'].forEach(function(id){
+  ['temp-heat','temp-core','temp-label'].forEach(function(id){
     if(map.getLayer(id)) map.setLayoutProperty(id,'visibility', v?'visible':'none'); });
 }
 
@@ -812,8 +889,8 @@ function renderTrend(years, annual, trend, refMean){
     xAxis:Object.assign({ type:'category', data:years }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, interval:9 } }),
     yAxis:Object.assign({ type:'value', scale:true }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, formatter:'{value}°' } }),
     series:[
-      { name:'Jahresmittel', type:'line', data:annual, symbol:'none', lineStyle:{ color:'rgba(183,183,191,.35)', width:1 } },
-      { name:'10-Jahres-Trend', type:'line', data:trend, smooth:true, symbol:'none', lineStyle:{ color:C_TREND, width:3 },
+      { name:'Jahresmittel', type:'line', data:annual, symbol:'none', itemStyle:{ color:C_TEMP }, lineStyle:{ color:C_TEMP, width:1.5, opacity:.6 } },
+      { name:'10-Jahres-Trend', type:'line', data:trend, smooth:true, symbol:'none', itemStyle:{ color:C_TREND }, lineStyle:{ color:C_TREND, width:3 },
         markLine:{ silent:true, symbol:'none', data:[{ yAxis:+refMean.toFixed(2) }],
           lineStyle:{ color:'#2A2A33', type:'dashed' }, label:{ color:'#7A7A85', formatter:'Ø 1961–90', fontSize:10 } } }
     ]
@@ -878,7 +955,7 @@ function selectCity(c){
 }
 
 function renderChips(){
-  var box=document.getElementById('city-chips'); box.innerHTML='';
+  var box=document.getElementById('city-chips'); if(!box) return; box.innerHTML='';
   CHIP_CITIES.forEach(function(nm){
     var c=CITIES.find(function(x){return x.name===nm;}); if(!c) return;
     var el=document.createElement('span');
@@ -913,7 +990,7 @@ function setupSearch(){
   async function search(q){
     var my=++reqId;
     try{
-      var r=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=8&language=de&format=json');
+      var r=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=20&language=de&format=json');
       if(!r.ok) throw new Error('HTTP '+r.status);
       var d=await r.json();
       if(my!==reqId) return;                 // veraltete Antwort verwerfen (Race)
@@ -944,6 +1021,13 @@ window.paintIcons();
 renderChips();
 setupSearch();
 loadForecast();
+
+/* Live-Aktualisierung: Verlauf jede Minute neu zeichnen (Jetzt-Marker wandert mit),
+   vollständige Daten alle 10 Minuten nachladen — statt nur zur vollen Stunde. */
+setInterval(function(){
+  if(lastForecast && document.getElementById('tab-forecast').classList.contains('on')) renderTempChart(lastForecast);
+}, 60*1000);
+setInterval(loadForecast, 10*60*1000);
 </script>
 </body>
 </html>

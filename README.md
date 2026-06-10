@@ -5,12 +5,11 @@ historischer Klimaanalyse (1940–heute). Entstanden als Prüfungsleistung im Mo
 **Generative KI** (THWS) – entwickelt mithilfe eines Code-Agenten.
 
 > **Aufgabenstellung:** Auswertung und Visualisierung von Wetterdaten zur
-> Identifikation grundlegender Trends und saisonaler Muster. Die statistische
-> Analyse erfolgt in **Python**; das Dashboard stellt die Ergebnisse dar.
+> Identifikation grundlegender Trends und saisonaler Muster.
 
 ## Live-Demo
 
-Frontend (GitHub Pages): https://naTHWS.github.io/Weather-app/
+GitHub Pages: https://naTHWS.github.io/Weather-app/
 
 ## Funktionen
 
@@ -26,81 +25,72 @@ Das Dashboard ist in drei Tabs gegliedert:
 
 ## Architektur
 
-Das Projekt besteht aus zwei Schichten:
+Das Dashboard ist eine **Single-File-App** (`index.html`) ohne Backend. Die
+Wetter- und Klimadaten werden zur Laufzeit direkt im Browser von öffentlichen,
+**key-freien** REST-APIs abgerufen.
 
-| Schicht | Technologie | Aufgabe |
-|---|---|---|
-| **Analyse-Layer (Python)** | FastAPI, pandas, numpy | Lädt historische Klimadaten, berechnet Jahresmittel, gleitende Durchschnitte und Referenzabweichungen. Stellt das Ergebnis über die REST-API `/climate-trends` bereit. |
-| **Dashboard (Frontend)** | HTML, Vanilla JS, ECharts, MapLibre GL | Single-File-App (`index.html`). Visualisiert Vorhersage, Karte und die vom Python-Layer gelieferten Klimatrends. |
+Bewusst **kein Backend**: Alle genutzten Dienste sind frei und ohne API-Schlüssel
+nutzbar. Es gibt daher kein Geheimnis (z. B. einen API-Key), das im Client
+versteckt werden müsste – ein Server als Proxy wäre nur dann nötig, wenn ein
+geheimer Schlüssel geschützt werden müsste. So bleibt das Deployment minimal
+(statisches Hosting via GitHub Pages) und es entsteht keine Angriffsfläche durch
+preisgegebene Zugangsdaten.
 
-Die **Vorhersage** und die **Kartentemperaturen** werden direkt von öffentlichen
-Wetter-APIs (siehe unten) bezogen; die **historische Klimaanalyse** ist der in
-Python implementierte Kern der Auswertung (`analysis.py`).
+## Datenquellen (alle ohne API-Key)
 
-## Datenquellen
-
-- **Open-Meteo Forecast API** – stündliche/tägliche Vorhersage (kein API-Key).
+- **Open-Meteo Forecast API** – stündliche/tägliche Vorhersage.
 - **Open-Meteo Historical Archive (ERA5 / Copernicus, ECMWF)** – historische
   Tagesmitteltemperaturen ab 1940 für die Klimaanalyse.
-- **Bright Sky / DWD MOSMIX** – offizielle DWD-Daten (im Python-Backend genutzt).
 - **Open-Meteo Geocoding API** – Ortssuche (Stadt → Koordinaten).
+- **CARTO Basemaps (OpenStreetMap-Daten)** – dunkle Kartenkacheln.
 
 ## Analyse-Methodik
 
-Die Klimaauswertung in `analysis.py`:
+Die historische Klimaauswertung:
 
 1. Lädt Tagesmitteltemperaturen (ERA5) ab 1940 für die gewählten Koordinaten.
-2. Aggregiert zu **jährlichen Mitteltemperaturen** (mit Mindest-Datenabdeckung
-   pro Jahr, damit unvollständige Jahre die Statistik nicht verzerren).
-3. Berechnet **gleitende 5- und 10-Jahres-Durchschnitte** zur Trenddarstellung.
+2. Aggregiert zu **jährlichen Mitteltemperaturen**.
+3. Berechnet einen **gleitenden 10-Jahres-Durchschnitt** zur Trenddarstellung.
 4. Bildet die **Abweichung** jedes Jahres gegenüber dem Mittel der
-   WMO-Referenzperiode **1961–1990** – der internationale Standard für
+   WMO-Referenzperiode **1961–1990** – dem internationalen Standard für
    Klimavergleiche.
 5. Erzeugt monatliche Mittelwerte für die Heatmap.
+
+Dieselbe Auswertung ist zusätzlich als eigenständiges **Python-Skript**
+(`analysis.py`, mit pandas/numpy) implementiert und kann zur reproduzierbaren,
+dokumentierten Analyse separat ausgeführt werden.
 
 ## Projektstruktur
 
 ```
 .
-├── index.html        # Dashboard (Frontend, Single-File-App)
-├── main.py           # FastAPI-Server: API-Endpunkte
-├── analysis.py       # Python-Klimaanalyse (pandas/numpy)
-├── find_station.py   # Hilfsskript: DWD-Stationssuche
-├── requirements.txt  # Python-Abhängigkeiten
-├── render.yaml       # Deployment-Konfiguration (Render)
+├── index.html        # Dashboard (Frontend, Single-File-App, kein Backend)
+├── analysis.py       # Eigenständige Python-Klimaanalyse (pandas/numpy)
 ├── Design Guide.html # Design-Referenz (Farben, Typografie, Tokens)
 └── PROJECT_STATUS.md # Entwicklungsdokumentation / Verlauf
 ```
 
 ## Lokale Ausführung
 
-**Backend (Python-Analyse):**
+**Dashboard:** `index.html` ist eigenständig und kann direkt im Browser geöffnet
+oder über einen beliebigen statischen Webserver ausgeliefert werden (z. B.
+GitHub Pages). Keine Installation, kein Server nötig.
+
+**Python-Analyse (optional, reproduzierbar):**
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload        # läuft auf http://localhost:8000
+pip install pandas numpy requests
+python analysis.py               # gibt die berechneten Klimatrends aus
 ```
-
-Endpunkte:
-- `GET /weather?lat=..&lon=..` – 7-Tage-Vorhersage
-- `GET /climate-trends?lat=..&lon=..` – historische Klimatrends
-- `GET /map-weather` – aktuelle Temperaturen deutscher Städte
-
-**Frontend:**
-
-`index.html` ist eine eigenständige Datei und kann direkt im Browser geöffnet
-oder über einen beliebigen statischen Webserver ausgeliefert werden (z. B.
-GitHub Pages).
 
 ## Technologie-Stack
 
-Python · FastAPI · pandas · numpy · HTML/CSS · JavaScript · Apache ECharts ·
-MapLibre GL JS
+HTML/CSS · JavaScript · Apache ECharts · MapLibre GL JS · Python (pandas, numpy)
 
 ## Kontext
 
 Prüfungsleistung im Modul *Generative KI*, THWS – Sommersemester 2026.
-Schwerpunkt: Datenanalyse und -visualisierung von Wetterdaten mit Python,
+Schwerpunkt: Datenanalyse und -visualisierung von Wetterdaten,
 umgesetzt mithilfe eines Code-Agenten.
