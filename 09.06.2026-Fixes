@@ -40,3 +40,11 @@ wind = Velocity(data=ds,
 m.add(wind)
 
 m
+
+
+in der html darf auf keinen fall die daten vorhanden sein 
+
+
+
+---> Meta ebene wie sind man ran gegangen welche tools welche einschränkungen welche probleme reflektion ... nicht rein den code erklären 
+--> welxche rolle spielt der mensch denn dabei was war das problem bei allem 
