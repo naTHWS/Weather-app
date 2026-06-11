@@ -244,7 +244,7 @@
   /* Vorhersage — Kennzahlen-Sidebar, großer Verlauf, Tages-Regenwahrscheinlichkeit */
   .metric-stack{ display:flex; flex-direction:column; gap:16px; height:100%; }
   .metric-stack > .card{ flex:1; }
-  .fc-chart-card{ height:440px; display:flex; flex-direction:column; }
+  .fc-chart-card{ height:100%; display:flex; flex-direction:column; }
   #temp-chart{ flex:1; height:auto; min-height:0; }
   @media (max-width:920px){ .metric-stack, .fc-chart-card{ height:auto; } #temp-chart{ height:300px; } }
   .day-row{ align-content:center; }
@@ -321,7 +321,7 @@
       <!-- Reihe 2: Temperaturverlauf + Kennzahlen-Sidebar -->
       <div class="span-8">
         <div class="card fc-chart-card">
-          <div class="lbl">Temperaturverlauf <span class="meta" id="temp-meta">48 h · °C</span></div>
+          <div class="lbl">Themperaturverlauf <span class="meta" id="temp-meta">48 h · °C</span></div>
           <div class="chart" id="temp-chart"></div>
         </div>
       </div>
