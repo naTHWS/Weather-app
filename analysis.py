@@ -61,10 +61,11 @@ def get_historical_trends(lat: float = 49.7913, lon: float = 9.9534):
         .rename(columns={"mean": "temp", "count": "n_days"})
     )
 
-    # Laufendes Jahr nur ab ≥ 9 vollständigen Monaten; ältere Jahre min. 30 Tage
+    # Abgeschlossene Jahre nur bei nahezu vollständiger Abdeckung (>= 330 Tage),
+    # laufendes Jahr ab >= 270 Tagen — identisch zum Filter im Dashboard.
     current_year = today.year
     annual_df = agg[
-        ((agg["year"] < current_year) & (agg["n_days"] >= 30)) |
+        ((agg["year"] < current_year) & (agg["n_days"] >= 330)) |
         ((agg["year"] == current_year) & (agg["n_days"] >= 270))
     ].copy()
 

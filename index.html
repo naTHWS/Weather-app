@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Würzburg — Wetter &amp; Klimaanalyse</title>
+<meta name="description" content="Interaktives Wetter-Dashboard: 7-Tage-Vorhersage, Temperatur-Heatmap Deutschland und historische Klimaanalyse (ERA5, ab 1940)." />
+<meta name="theme-color" content="#0B0B0D" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%230B0B0D'/%3E%3Ccircle cx='24' cy='24' r='8' fill='%23F6C544'/%3E%3Cg stroke='%23F6C544' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M24 8v4M24 36v4M8 24h4M36 24h4M13 13l3 3M32 32l3 3M35 13l-3 3M16 32l-3 3'/%3E%3C/g%3E%3C/svg%3E" />
 
 <!-- Schriften: Inter (Interface/Daten) + JetBrains Mono (technische Werte) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,6 +47,25 @@
   body{ font-size:15px; line-height:1.55; font-weight:400; letter-spacing:-0.005em; min-height:100vh; }
   ::selection{ background:var(--ac-soft); }
 
+  /* Ruhige Tiefe statt totem Schwarz: kaum sichtbare Akzent-Aura oben rechts */
+  body{ background:
+    radial-gradient(1200px 640px at 78% -12%, rgba(121,166,201,.05), transparent 62%)
+    var(--bg-0); background-attachment:fixed; }
+
+  /* Tastatur-Fokus sichtbar, Maus-Fokus unauffällig */
+  :focus{ outline:none; }
+  :focus-visible{ outline:2px solid var(--ac-line); outline-offset:2px; }
+
+  /* Tabellenziffern: Datenwerte stehen ruhig untereinander */
+  .mono,.hero .temp,.hero .st .r .v,.metric .v,.metric .head .sub,.day .t,.day .pp,
+  .lbl .meta,.uvbar-scale,.lg-scale,.map-badge .t,footer{ font-variant-numeric:tabular-nums; }
+
+  /* Schmale, dunkle Scrollbar */
+  html{ scrollbar-color:var(--bg-3) var(--bg-0); scrollbar-width:thin; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb{ background:var(--bg-3); border:3px solid var(--bg-0); border-radius:8px; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--line-2); }
+
   .h1{ font-size:32px; line-height:1.15; letter-spacing:-0.02em; font-weight:600; margin:0; }
   .label{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx-3); font-weight:500; }
   .mono{ font-family:var(--ff-mono); font-size:12px; color:var(--tx-3); }
@@ -52,7 +74,7 @@
 
   /* ---------- Top bar ---------- */
   .topbar{ display:flex; align-items:center; gap:24px; flex-wrap:wrap;
-    padding-bottom:20px; border-bottom:1px solid var(--line-1); margin-bottom:28px; }
+    padding-bottom:20px; border-bottom:1px solid var(--line-1); margin-bottom:36px; }
   .brand{ display:flex; align-items:center; gap:12px; }
   .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--ac); box-shadow:0 0 0 4px var(--ac-soft); }
   .brand .name{ font-size:14px; font-weight:600; letter-spacing:-0.01em; }
@@ -63,10 +85,13 @@
   .seg button{ background:transparent; border:none; color:var(--tx-3); padding:8px 18px;
     border-radius:var(--r-pill); font:500 12.5px/1 var(--ff-sans); cursor:pointer; transition:color .15s, background .15s; letter-spacing:-0.005em; }
   .seg button:hover{ color:var(--tx-2); }
-  .seg button.on{ background:var(--bg-0); color:var(--tx-1); }
+  .seg button.on{ background:var(--bg-0); color:var(--tx-1);
+    box-shadow:0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px var(--line-2); }
 
   .input{ display:flex; align-items:center; gap:10px; background:var(--bg-2); border:1px solid var(--line-2);
-    border-radius:var(--r-pill); padding:10px 16px; color:var(--tx-3); font-size:13px; min-width:240px; position:relative; }
+    border-radius:var(--r-pill); padding:10px 16px; color:var(--tx-3); font-size:13px; min-width:240px; position:relative;
+    transition:border-color .15s, box-shadow .15s; }
+  .input:focus-within{ border-color:var(--ac-line); box-shadow:0 0 0 3px var(--ac-soft); }
   .input svg{ width:14px; height:14px; flex-shrink:0; }
   .input input{ background:none; border:none; outline:none; color:var(--tx-1); font:400 13px var(--ff-sans); flex:1; }
   .input input::placeholder{ color:var(--tx-3); }
@@ -82,13 +107,8 @@
   .suggest .empty{ color:var(--tx-3); cursor:default; }
   .suggest .empty:hover{ background:none; color:var(--tx-3); }
 
-  .chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:var(--r-pill);
-    background:var(--bg-2); border:1px solid var(--line-2); color:var(--tx-2); font-size:11.5px; font-weight:500; cursor:pointer; transition:.15s; }
-  .chip:hover{ color:var(--tx-1); }
-  .chip.on{ background:var(--ac-soft); border-color:var(--ac-line); color:var(--ac); }
-  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
-
-  .status{ display:inline-flex; align-items:center; gap:8px; font-size:11.5px; color:var(--tx-3); }
+  .status{ display:inline-flex; align-items:center; gap:8px; font-size:11.5px; color:var(--tx-3);
+    background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-pill); padding:7px 14px; }
   .status .d{ width:8px; height:8px; border-radius:50%; background:var(--tx-4); box-shadow:0 0 10px currentColor; }
 
   .wi{ display:inline-block; line-height:0; }
@@ -108,7 +128,8 @@
   .span-12{ grid-column:span 12; }
   @media (max-width:920px){ .span-3,.span-4,.span-5,.span-6,.span-7,.span-8{ grid-column:span 12; } }
 
-  .card{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:8px; }
+  .card{ background:linear-gradient(180deg, rgba(255,255,255,.014), rgba(255,255,255,0) 64px) var(--bg-1);
+    border:1px solid var(--line-1); border-radius:var(--r-md); padding:18px 20px; box-shadow:var(--sh-1); }
   .card .lbl{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--tx-3);
     font-weight:500; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; }
   .card .lbl .meta{ color:var(--tx-4); font-family:var(--ff-mono); letter-spacing:.05em; text-transform:none; }
@@ -132,11 +153,13 @@
 
   .day-row{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
   @media (max-width:720px){ .day-row{ grid-template-columns:repeat(4,1fr); } }
-  .day{ background:var(--bg-1); border:1px solid var(--line-1); border-radius:var(--r-md); padding:16px 10px; text-align:center; transition:.15s; }
-  .day:hover{ background:var(--bg-2); border-color:var(--line-2); }
-  .day .d{ font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--tx-3); margin-bottom:12px; }
-  .day .ic{ display:flex; justify-content:center; margin-bottom:12px; }
-  .day .t{ font-size:18px; font-weight:600; letter-spacing:-0.02em; }
+  /* Tage als ruhige Flächen statt Karte-in-Karte: Rahmen erst bei Interaktion */
+  .day{ background:transparent; border:1px solid transparent; border-radius:var(--r-sm);
+    padding:14px 8px; text-align:center; cursor:pointer; transition:background .15s, border-color .15s; }
+  .day:hover{ background:var(--bg-2); }
+  .day .d{ font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--tx-3); margin-bottom:10px; }
+  .day .ic{ display:flex; justify-content:center; margin-bottom:10px; }
+  .day .t{ font-size:17px; font-weight:600; letter-spacing:-0.02em; }
   .day .t .lo{ color:var(--tx-3); font-size:13px; font-weight:400; margin-left:4px; }
 
   .metric .head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
@@ -146,16 +169,18 @@
   .metric .v .u{ font-size:14px; color:var(--tx-3); font-weight:400; margin-left:4px; }
   .metric .foot{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:11.5px; color:var(--tx-3); }
 
-  .bars{ display:flex; align-items:flex-end; gap:2px; height:56px; margin-top:6px; }
-  .bars span{ flex:1; background:var(--ic-bg); border-radius:2px 2px 0 0; opacity:.45; transition:height .3s; }
-  .bars span.hi{ background:var(--tx-1); opacity:.95; }
+  .bars{ display:flex; align-items:flex-end; gap:3px; height:56px; margin-top:6px;
+    border-bottom:1px solid var(--line-2); padding-bottom:1px; }
+  .bars span{ flex:1; background:var(--tx-4); opacity:.55; border-radius:2px; min-height:3px; transition:height .3s, opacity .15s; }
+  .bars span:hover{ opacity:.9; }
+  .bars span.hi{ background:var(--ac); opacity:1; }
 
   .gauge{ position:relative; height:84px; display:flex; align-items:flex-end; justify-content:center; }
   .gauge svg{ width:170px; height:96px; }
 
-  .chart{ width:100%; height:260px; }
+  .chart{ width:100%; height:240px; }
   .chart.tall{ height:340px; }
-  .chart.short{ height:200px; }
+  .chart.short{ height:150px; }
 
   #map{ width:100%; height:560px; border-radius:var(--r-md); overflow:hidden; border:1px solid var(--line-1); background:var(--bg-1); }
   .map-wrap{ position:relative; }
@@ -189,31 +214,26 @@
   @keyframes sp{ to{ transform:rotate(360deg); } }
 
   footer{ margin-top:64px; padding-top:24px; border-top:1px solid var(--line-1);
-    display:flex; justify-content:space-between; color:var(--tx-3); font-size:12px; font-family:var(--ff-mono); flex-wrap:wrap; gap:8px; }
+    display:flex; justify-content:space-between; color:var(--tx-3); font-size:11.5px; font-family:var(--ff-mono); flex-wrap:wrap; gap:8px 24px; }
+  footer .src{ color:var(--tx-4); }
 
   /* =====================================================================
-     09.06 Feinschliff — Layout-Konsistenz, UV-Skala, klickbare Tage
+     Layout-Verfeinerung — bündige Spalten, UV-Skala, wählbare Tage
      ===================================================================== */
   .grid{ align-items:stretch; }
   /* Hero füllt seine Spalte, sodass die Unterkante mit dem rechten Block bündig ist */
   .span-4.stretch{ display:flex; }
   .span-4.stretch > .hero{ flex:1; display:flex; flex-direction:column; }
-  .hero .st{ margin-top:auto; padding-top:18px; }
+  .hero .st{ margin-top:auto; padding-top:16px; border-top:1px solid var(--line-1); }
   /* Metric-Karten gleiche Höhe, Fuß bündig unten */
   .card.metric{ display:flex; flex-direction:column; }
   .card.metric .foot{ margin-top:auto; }
-  /* kompaktere 7-Tage-Karten (laut Referenzbild "zu groß") */
-  .day{ padding:12px 8px; cursor:pointer; }
-  .day .d{ margin-bottom:8px; }
-  .day .ic{ margin-bottom:8px; }
-  .day .t{ font-size:17px; }
-  .day.sel{ background:var(--bg-2); border-color:var(--ac-line); box-shadow:inset 0 0 0 1px var(--ac-line); }
-  /* kompaktere Diagramme */
-  .chart{ height:240px; }
-  .chart.short{ height:150px; }
+  .day.sel{ background:var(--bg-2); border-color:var(--ac-line); }
+  .day.sel .d{ color:var(--ac); }
   /* UV-Index als horizontale Grün→Rot-Skala (analog Heatmap) */
-  .uvbar{ position:relative; height:14px; margin-top:8px; }
-  .uvbar-track{ position:absolute; inset:0; border-radius:var(--r-pill);
+  .uvbar{ position:relative; height:16px; margin-top:12px; }
+  .uvbar-track{ position:absolute; left:0; right:0; top:50%; height:8px; transform:translateY(-50%);
+    border-radius:var(--r-pill); opacity:.9;
     background:linear-gradient(90deg,#3FA46B 0%,#8FBE4C 26%,#E6C24A 50%,#E08A43 74%,#CE544B 100%); }
   .uvbar-knob{ position:absolute; top:50%; left:0; width:16px; height:16px; border-radius:50%;
     background:#F2F2F4; border:2px solid var(--bg-1);
@@ -221,7 +241,7 @@
     transform:translate(-50%,-50%); transition:left .35s ease; }
   .uvbar-scale{ display:flex; justify-content:space-between; margin-top:8px;
     font-family:var(--ff-mono); font-size:10px; color:var(--tx-3); }
-  /* Vorhersage v2 — Kennzahlen-Sidebar, größerer Verlauf, Tages-Regenwahrscheinlichkeit */
+  /* Vorhersage — Kennzahlen-Sidebar, großer Verlauf, Tages-Regenwahrscheinlichkeit */
   .metric-stack{ display:flex; flex-direction:column; gap:16px; height:100%; }
   .metric-stack > .card{ flex:1; }
   .fc-chart-card{ height:440px; display:flex; flex-direction:column; }
@@ -229,6 +249,20 @@
   @media (max-width:920px){ .metric-stack, .fc-chart-card{ height:auto; } #temp-chart{ height:300px; } }
   .day-row{ align-content:center; }
   .day .pp{ font-size:11px; color:#5BA6DD; margin-top:6px; font-family:var(--ff-mono); min-height:14px; }
+
+  /* =====================================================================
+     Responsiv & Bewegungsreduktion
+     ===================================================================== */
+  @media (max-width:720px){
+    .page{ padding:16px 16px 56px; }
+    .topbar{ gap:12px; }
+    .h1{ font-size:26px; }
+    .hero .temp{ font-size:50px; }
+    #map{ height:420px; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
 </style>
 </head>
 <body>
@@ -247,24 +281,21 @@
     <span class="spacer"></span>
 
     <div class="seg" id="tabs" role="tablist">
-      <button class="on" data-tab="forecast">Vorhersage</button>
-      <button data-tab="map">Karte</button>
-      <button data-tab="climate">Klimaanalyse</button>
+      <button class="on" role="tab" aria-selected="true" data-tab="forecast">Vorhersage</button>
+      <button role="tab" aria-selected="false" data-tab="map">Karte</button>
+      <button role="tab" aria-selected="false" data-tab="climate">Klimaanalyse</button>
     </div>
 
     <span class="spacer"></span>
 
     <div class="input">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-      <input id="city-search" placeholder="Stadt suchen…" autocomplete="off" />
+      <input id="city-search" placeholder="Stadt suchen…" autocomplete="off" aria-label="Stadt suchen" />
       <div class="suggest" id="suggest"></div>
     </div>
 
     <div class="status"><span class="d" id="status-dot"></span><span id="status-text">lädt…</span></div>
   </header>
-
-  <!-- Stadt-Schnellauswahl (Chips) entfernt – siehe Referenzbild 09.06.2026 -->
-  <div style="height:8px;"></div>
 
   <!-- ================= TAB: VORHERSAGE ================= -->
   <section class="tab on" id="tab-forecast">
@@ -336,8 +367,8 @@
         <div class="when">Aktuelle Temperaturen deutscher Städte als Heatmap — oder Detailansicht des gewählten Standorts.</div>
       </div>
       <div class="seg" id="map-modes" role="tablist">
-        <button class="on" data-mode="heat">Temperatur-Heatmap</button>
-        <button data-mode="standort">Standort</button>
+        <button class="on" role="tab" aria-selected="true" data-mode="heat">Temperatur-Heatmap</button>
+        <button role="tab" aria-selected="false" data-mode="standort">Standort</button>
       </div>
     </div>
     <div class="map-wrap">
@@ -391,7 +422,8 @@
   </section>
 
   <footer>
-    <span>WÜRZBURG · WETTER &amp; KLIMAANALYSE</span>
+    <span>WETTER &amp; KLIMAANALYSE</span>
+    <span class="src">Daten: Open-Meteo · DWD ICON · ERA5/Copernicus — Karte: © OpenStreetMap / CARTO</span>
     <span id="foot-coords">49.7913, 9.9534</span>
   </footer>
 </main>
@@ -467,21 +499,6 @@ function wmo(code, isDay){
   return { icon:e[0], label:e[1], tint:TINT[e[2]] };
 }
 
-/* ============ Städte (Würzburg = Standard) ============ */
-var CITIES = [
-  {name:'Würzburg',lat:49.7913,lon:9.9534},{name:'Berlin',lat:52.52,lon:13.40},
-  {name:'Hamburg',lat:53.55,lon:9.99},{name:'München',lat:48.14,lon:11.58},
-  {name:'Köln',lat:50.93,lon:6.95},{name:'Frankfurt/M',lat:50.11,lon:8.68},
-  {name:'Stuttgart',lat:48.78,lon:9.18},{name:'Düsseldorf',lat:51.22,lon:6.78},
-  {name:'Leipzig',lat:51.34,lon:12.37},{name:'Dresden',lat:51.05,lon:13.74},
-  {name:'Hannover',lat:52.37,lon:9.73},{name:'Nürnberg',lat:49.45,lon:11.08},
-  {name:'Bremen',lat:53.08,lon:8.80},{name:'Freiburg',lat:47.99,lon:7.84},
-  {name:'Rostock',lat:54.09,lon:12.14},{name:'Kiel',lat:54.32,lon:10.13},
-  {name:'Erfurt',lat:50.98,lon:11.03},{name:'Mainz',lat:50.00,lon:8.27},
-  {name:'Saarbrücken',lat:49.23,lon:7.00},{name:'Bamberg',lat:49.90,lon:10.90}
-];
-var CHIP_CITIES = ['Würzburg','Berlin','München','Hamburg','Köln','Frankfurt/M','Stuttgart'];
-
 /* ============ State + Chart-Farben (ECharts: Hex, kein oklch) ============ */
 var state = { lat:49.7913, lon:9.9534, name:'Würzburg' };
 var lastForecast=null, selDay=0;
@@ -514,15 +531,17 @@ var MAP_CITIES=[
 
 var charts={};
 function getChart(id){ if(!charts[id]) charts[id]=echarts.init(document.getElementById(id),'dark'); return charts[id]; }
+var TIP_CSS='border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); padding:8px 12px;';
 var baseChart={
   backgroundColor:'transparent',
   textStyle:{ color:'#B7B7BF', fontFamily:'Inter, sans-serif' },
   grid:{ left:46, right:18, top:24, bottom:36 },
   tooltip:{ trigger:'axis', backgroundColor:'#23232B', borderColor:'#2A2A33',
-            textStyle:{ color:'#F2F2F4' }, axisPointer:{ lineStyle:{ color:'#2A2A33' } } }
+            textStyle:{ color:'#F2F2F4' }, extraCssText:TIP_CSS,
+            axisPointer:{ lineStyle:{ color:'#2A2A33' } } }
 };
 function ax(){ return { axisLine:{ lineStyle:{ color:'#2A2A33' } }, axisTick:{ show:false },
-  axisLabel:{ color:'#7A7A85', fontSize:11 }, splitLine:{ lineStyle:{ color:'#1E1E25' } } }; }
+  axisLabel:{ color:'#7A7A85', fontSize:11 }, splitLine:{ lineStyle:{ color:'#1A1A21' } } }; }
 
 function setStatus(ok,msg){
   var dot=document.getElementById('status-dot'), txt=document.getElementById('status-text');
@@ -586,7 +605,7 @@ function renderHero(d){
 function renderDays(d){
   var box=document.getElementById('days'), t=d.daily, html='';
   for(var i=0;i<t.time.length;i++){
-    var wd=new Date(t.time[i]+'T12:00').toLocaleDateString('de-DE',{weekday:'short'});
+    var wd=i===0?'Heute':new Date(t.time[i]+'T12:00').toLocaleDateString('de-DE',{weekday:'short'});
     var w=wmo(t.weather_code[i], true);
     var pp=(t.precipitation_probability_max&&t.precipitation_probability_max[i]!=null)?t.precipitation_probability_max[i]:null;
     html+='<div class="day'+(i===selDay?' sel':'')+'" data-i="'+i+'" role="button" tabindex="0" title="Details anzeigen"><div class="d">'+wd+'</div>'
@@ -670,7 +689,7 @@ function renderPrecipChart(d){
     return dt.getHours()===0 ? dt.toLocaleDateString('de-DE',{weekday:'short'}) : dt.getHours()+':00'; });
   getChart('precip-chart').setOption(Object.assign({}, baseChart, {
     tooltip:{ trigger:'axis', backgroundColor:'#23232B', borderColor:'#2A2A33', textStyle:{ color:'#F2F2F4' },
-      valueFormatter:function(v){ return (v||0).toFixed(1)+' l/m²'; } },
+      extraCssText:TIP_CSS, valueFormatter:function(v){ return (v||0).toFixed(1)+' l/m²'; } },
     xAxis:Object.assign({ type:'category', data:labels }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, interval:5 } }),
     yAxis:Object.assign({ type:'value' }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, formatter:'{value} mm' } }),
     series:[{ name:'Niederschlag', type:'bar', data:h.precipitation.slice(0,n), itemStyle:{ color:C_RAIN, borderRadius:[2,2,0,0] } }]
@@ -807,7 +826,10 @@ function setHeatVisible(v){
 
 function setMapMode(mode){
   mapMode=mode;
-  document.querySelectorAll('#map-modes button').forEach(function(b){ b.classList.toggle('on', b.dataset.mode===mode); });
+  document.querySelectorAll('#map-modes button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.mode===mode);
+    b.setAttribute('aria-selected', b.dataset.mode===mode ? 'true' : 'false');
+  });
   var legend=document.getElementById('map-legend');
   if(mode==='heat'){
     legend.style.display='block';
@@ -901,7 +923,7 @@ function renderDeviation(years, dev){
   var ch=getChart('deviation-chart'); ch.hideLoading();
   ch.setOption(Object.assign({}, baseChart, {
     tooltip:{ trigger:'axis', backgroundColor:'#23232B', borderColor:'#2A2A33', textStyle:{ color:'#F2F2F4' },
-      valueFormatter:function(v){ return (v>0?'+':'')+v+'°'; } },
+      extraCssText:TIP_CSS, valueFormatter:function(v){ return (v>0?'+':'')+v+'°'; } },
     xAxis:Object.assign({ type:'category', data:years }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, interval:9 } }),
     yAxis:Object.assign({ type:'value' }, ax(), { axisLabel:{ color:'#7A7A85', fontSize:11, formatter:'{value}°' } }),
     visualMap:{ show:false, min:-2, max:2, dimension:1, inRange:{ color:['#8FA8D9','#A6D2E0','#DCE3A8','#E0A07E','#D07258'] } },
@@ -924,7 +946,7 @@ function renderHeatmap(byYM, years){
   }
   ch.setOption({ backgroundColor:'transparent', textStyle:{ color:'#B7B7BF', fontFamily:'Inter, sans-serif' },
     tooltip:{ position:'top', backgroundColor:'#23232B', borderColor:'#2A2A33', textStyle:{ color:'#F2F2F4' },
-      formatter:function(p){ return xlabels[p.value[0]]+' '+months[p.value[1]]+': '+p.value[2]+'°'; } },
+      extraCssText:TIP_CSS, formatter:function(p){ return xlabels[p.value[0]]+' '+months[p.value[1]]+': '+p.value[2]+'°'; } },
     grid:{ left:46, right:18, top:10, bottom:64 },
     xAxis:{ type:'category', data:xlabels, axisLine:{ lineStyle:{ color:'#2A2A33' } }, axisTick:{show:false}, axisLabel:{ color:'#7A7A85', fontSize:10, interval:9 } },
     yAxis:{ type:'category', data:months, axisLine:{ lineStyle:{ color:'#2A2A33' } }, axisTick:{show:false}, axisLabel:{ color:'#7A7A85', fontSize:11 } },
@@ -937,7 +959,10 @@ function renderHeatmap(byYM, years){
 
 /* ============ Tabs, Städteauswahl, Suche ============ */
 function switchTab(name){
-  document.querySelectorAll('#tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab===name); });
+  document.querySelectorAll('#tabs button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.tab===name);
+    b.setAttribute('aria-selected', b.dataset.tab===name ? 'true' : 'false');
+  });
   ['forecast','map','climate'].forEach(function(t){ document.getElementById('tab-'+t).classList.toggle('on', t===name); });
   if(name==='map'){ setTimeout(openMap, 40); }
   if(name==='climate'){ loadClimate(false); setTimeout(function(){
@@ -948,21 +973,10 @@ function switchTab(name){
 
 function selectCity(c){
   state.lat=c.lat; state.lon=c.lon; state.name=c.name;
-  renderChips(); loadForecast(); climateLoadedFor=null;
+  loadForecast(); climateLoadedFor=null;
   if(document.getElementById('tab-climate').classList.contains('on')) loadClimate(true);
   // im Standort-Modus zur Stadt fliegen; im Heatmap-Modus nur den (verborgenen) Marker nachziehen
   if(map){ if(mapMode==='standort') recenterMap(); else if(mapMarker) mapMarker.setLngLat([state.lon, state.lat]); }
-}
-
-function renderChips(){
-  var box=document.getElementById('city-chips'); if(!box) return; box.innerHTML='';
-  CHIP_CITIES.forEach(function(nm){
-    var c=CITIES.find(function(x){return x.name===nm;}); if(!c) return;
-    var el=document.createElement('span');
-    el.className='chip'+(c.name===state.name?' on':''); el.textContent=c.name;
-    el.onclick=function(){ selectCity(c); };
-    box.appendChild(el);
-  });
 }
 
 function esc(s){ return String(s).replace(/[&<>"']/g, function(m){
@@ -1018,7 +1032,6 @@ document.querySelectorAll('#map-modes button').forEach(function(b){ b.onclick=fu
 window.addEventListener('resize', function(){ Object.keys(charts).forEach(function(id){ charts[id].resize(); }); if(map) map.resize(); });
 
 window.paintIcons();
-renderChips();
 setupSearch();
 loadForecast();
 
