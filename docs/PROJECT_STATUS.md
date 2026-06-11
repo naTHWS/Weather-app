@@ -99,7 +99,7 @@ Das Projekt befand sich in **Phase 3** (akademische Klimaanalyse). Das bestehend
 
 ### 2.1 Design-Konzept
 
-Das neue Dashboard orientiert sich an modernen Wetter-Apps (Referenzbild: `dashboard bsp .png`) und setzt folgende Design-Prinzipien um:
+Das neue Dashboard orientiert sich an modernen Wetter-Apps (Referenzbild: `docs/design/dashboard-beispiel.png`) und setzt folgende Design-Prinzipien um:
 
 | Prinzip | Umsetzung |
 |---|---|

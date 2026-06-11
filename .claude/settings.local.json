@@ -13,7 +13,12 @@
       "PowerShell($content = Get-Content 'c:\\\\Users\\\\naull\\\\OneDrive\\\\Studium\\\\04_Semester\\\\01_FWMP\\\\Project\\\\IndexV2.html' -Raw -Encoding UTF8; $tagStart = '<script type=\"__bundler/template\">'; $start = $content.IndexOf\\($tagStart\\) + $tagStart.Length; $end = $content.IndexOf\\('</script>', $start\\); $jsonStr = $content.Substring\\($start, $end - $start\\); $template = $jsonStr | ConvertFrom-Json; $lines = $template -split \"`n\"; $lineStart = [Math]::Max\\(0, 2324\\); $lineEnd = [Math]::Min\\($lines.Count - 1, 2342\\); for \\($i = $lineStart; $i -le $lineEnd; $i++\\) { Write-Host \"Line $\\($i+1\\): $\\($lines[$i]\\)\" })",
       "PowerShell($content = Get-Content 'c:\\\\Users\\\\naull\\\\OneDrive\\\\Studium\\\\04_Semester\\\\01_FWMP\\\\Project\\\\IndexV2.html' -Raw -Encoding UTF8; $searchStr = 'DWD-Daten nicht verf'; $pos = $content.LastIndexOf\\($searchStr\\); Write-Host \"Found at position: $pos\"; Write-Host \"Raw context: '$\\($content.Substring\\($pos - 20, 200\\)\\)'\")",
       "PowerShell(\\(Get-Content \"C:\\\\Users\\\\naull\\\\OneDrive\\\\Studium\\\\04_Semester\\\\01_FWMP\\\\Project\\\\index.html\" -Raw\\) -replace 'http://localhost:8000', 'https://wetter-api.onrender.com' | Set-Content \"C:\\\\Users\\\\naull\\\\OneDrive\\\\Studium\\\\04_Semester\\\\01_FWMP\\\\Project\\\\index.html\" -Encoding utf8)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "PowerShell(git ls-tree origin/main --name-only)",
+      "PowerShell(git fetch origin 2>$null)",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://naTHWS.github.io/Weather-app/\" -Method Head -UseBasicParsing -TimeoutSec 20; \"Pages-Root: $\\($r.StatusCode\\)\" } catch { \"Pages-Root: $\\($_.Exception.Message\\)\" }; try { $r2 = Invoke-WebRequest -Uri \"https://naTHWS.github.io/Weather-app/Index.html\" -Method Head -UseBasicParsing -TimeoutSec 20; \"Pages-Index.html: $\\($r2.StatusCode\\)\" } catch { \"Pages-Index.html: $\\($_.Exception.Message\\)\" })",
+      "mcp__plugin_ecc_playwright__browser_resize"
     ]
   }
 }

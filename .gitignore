@@ -1,12 +1,16 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
-*.bak
+
+# Lokale Umgebung / Editor
 .env
+.claude/settings.local.json
+
+# Backups & lokale Arbeitsdateien
+*.bak
 01_Fwpm-Desingguide.make
-
-# Große Binär-/NetCDF-Daten gehören nicht ins Repo
-*.nc
-
-# Backup des alten kompilierten Figma-Make-Exports (nicht versionieren)
 _figma-make-export.index.html.bak
+
+# Grosse Binaer-/NetCDF-Daten gehoeren nicht ins Repo
+*.nc

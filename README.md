@@ -64,10 +64,17 @@ dokumentierten Analyse separat ausgeführt werden.
 
 ```
 .
-├── index.html        # Dashboard (Frontend, Single-File-App, kein Backend)
-├── analysis.py       # Eigenständige Python-Klimaanalyse (pandas/numpy)
-├── Design Guide.html # Design-Referenz (Farben, Typografie, Tokens)
-└── PROJECT_STATUS.md # Entwicklungsdokumentation / Verlauf
+├── index.html                  # Dashboard (Frontend, Single-File-App, kein Backend)
+├── analysis.py                 # Eigenständige Python-Klimaanalyse (pandas/numpy)
+├── requirements.txt            # Python-Abhängigkeiten für analysis.py
+└── docs/
+    ├── PROJECT_STATUS.md       # Entwicklungsdokumentation / Verlauf
+    ├── aufgabenstellung.txt    # Original-Aufgabenstellung
+    ├── design/
+    │   ├── design-guide.html   # Design-Referenz (Farben, Typografie, Tokens)
+    │   ├── design-guide.png    # Design-Guide als Bild
+    │   └── dashboard-beispiel.png  # Layout-Referenzbild
+    └── dev-notes/              # Datierte Entwicklungs-Notizen (Feedback-Runden)
 ```
 
 ## Lokale Ausführung
@@ -81,7 +88,7 @@ GitHub Pages). Keine Installation, kein Server nötig.
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install pandas numpy requests
+pip install -r requirements.txt
 python analysis.py               # gibt die berechneten Klimatrends aus
 ```
 
