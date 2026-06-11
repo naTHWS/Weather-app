@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Excalidraw Viewer</title>
+<script src="https://unpkg.com/@excalidraw/utils@0.1.2/dist/excalidraw-utils.min.js"></script>
+<style>
+  body{ margin:0; background:#ffffff; }
+  #root svg{ display:block; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+async function load(){
+  var p = new URLSearchParams(location.search);
+  var file = p.get('file');
+  var zoom = parseFloat(p.get('zoom') || '1');
+  var r = await fetch(file + '?t=' + Date.now(), {cache:'no-store'});
+  var scene = await r.json();
+  var svg = await ExcalidrawUtils.exportToSvg({
+    elements: scene.elements,
+    appState: Object.assign({}, scene.appState || {}, {
+      exportBackground: true, viewBackgroundColor: '#ffffff', exportPadding: 24
+    }),
+    files: scene.files || {}
+  });
+  // Remote-Fonts (excalidraw.com) sind in der Sandbox blockiert und lassen den
+  // Renderer haengen — durch lokale Monospace-Fonts ersetzen.
+  svg.querySelectorAll('style').forEach(function(s){
+    s.textContent = 'text{font-family:"Cascadia Code",Consolas,Menlo,monospace !important;}';
+  });
+  var root = document.getElementById('root');
+  root.innerHTML = '';
+  if (zoom !== 1) {
+    var w = parseFloat(svg.getAttribute('width')), h = parseFloat(svg.getAttribute('height'));
+    svg.setAttribute('width', w * zoom);
+    svg.setAttribute('height', h * zoom);
+  }
+  root.appendChild(svg);
+  window.__svgReady = true;
+  document.title = 'OK ' + file;
+}
+load().catch(function(e){ document.body.innerHTML = '<pre style="color:red">' + (e && e.stack || e) + '</pre>'; document.title = 'RENDER-FEHLER'; });
+</script>
+</body>
+</html>
