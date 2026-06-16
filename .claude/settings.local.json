@@ -18,7 +18,8 @@
       "PowerShell(git fetch origin 2>$null)",
       "mcp__Claude_Preview__preview_start",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://naTHWS.github.io/Weather-app/\" -Method Head -UseBasicParsing -TimeoutSec 20; \"Pages-Root: $\\($r.StatusCode\\)\" } catch { \"Pages-Root: $\\($_.Exception.Message\\)\" }; try { $r2 = Invoke-WebRequest -Uri \"https://naTHWS.github.io/Weather-app/Index.html\" -Method Head -UseBasicParsing -TimeoutSec 20; \"Pages-Index.html: $\\($r2.StatusCode\\)\" } catch { \"Pages-Index.html: $\\($_.Exception.Message\\)\" })",
-      "mcp__plugin_ecc_playwright__browser_resize"
+      "mcp__plugin_ecc_playwright__browser_resize",
+      "Bash(python -m http.server 8765 --bind 127.0.0.1)"
     ]
   }
 }

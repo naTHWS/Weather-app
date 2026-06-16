@@ -394,7 +394,7 @@
     <div class="page-head">
       <div>
         <h1 class="h1" id="cl-city">Würzburg</h1>
-        <div class="when">Historische ERA5-Reanalyse (Open-Meteo Archive, ab 1940) — Klimareferenz 1961–1990.</div>
+        <div class="when">Historische ERA5-Reanalyse (Open-Meteo Archive, ab 1940) — Klimareferenz 1961–2025.</div>
       </div>
     </div>
 
@@ -407,7 +407,7 @@
       </div>
       <div class="span-5">
         <div class="card">
-          <div class="lbl">Abweichung vom Referenzmittel <span class="meta">vs. 1961–1990</span></div>
+          <div class="lbl">Abweichung vom Referenzmittel <span class="meta">vs. 1961–2025</span></div>
           <div class="chart tall" id="deviation-chart"></div>
         </div>
       </div>
@@ -888,7 +888,7 @@ async function loadClimate(force){
       if(y===curY && vals.length<270) return;
       years.push(y); annual.push(+(vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2));
     });
-    var refVals=years.flatMap(function(y,i){ return (y>=1961&&y<=1990)?[annual[i]]:[]; });
+    var refVals=years.flatMap(function(y,i){ return (y>=1961&&y<=2025)?[annual[i]]:[]; });
     var refMean=refVals.length?refVals.reduce(function(a,b){return a+b;},0)/refVals.length:annual[0];
     var trend=annual.map(function(_,i){ var s=Math.max(0,i-4), e=Math.min(annual.length-1,i+5), w=annual.slice(s,e+1);
       return +(w.reduce(function(a,b){return a+b;},0)/w.length).toFixed(2); });

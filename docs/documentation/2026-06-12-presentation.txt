@@ -1,0 +1,39 @@
+Präsentation der Wetter & Klimaanalyse
+
+    --> Grunsätzlicher aufbau der Präsentation:
+        - Das Projekt soll auf einer Meta-Ebene erklärt werden es geht also nicht darum den HTML code zu presentieren. Wir wollen also unsere Vorgehensweise darstellen, in diesem sinne 
+          werden wir bestimmte phasen beschreiben müssen.
+
+        - ich denke wir sollten also unsere Preäsentation also in 4-5 Phasen beschreiben. Wir haben schon versucht während der erstellung immer "buch" zu führen mit der @PROJECT-STATUS.md datei, aber dort 
+        ist denke ich meist nur der code vorhanden die überlegungen die ich in den chats beschrieben habe und selbst beschlossen habe fehlen.
+
+    --> aufgabenbeschreibung: wir müssen also unsere chats durchsuchen und die überlegungen entscheidungen aufschreiben um sie anschließend in der presi wiedergeben zu können. 
+
+    hier noch an was ich mich erinnern kann:
+        - Entschiedung Thema 
+        - Modell & Ki wahl
+        - Desing Optionen 
+        - Lokale erstellung 
+        - sandbox durch .venv 
+        - ein promt erstellung erster test 
+        - Backend nutzung ? 
+
+        - Desing optimierung 
+        - layoutvorlagen Dashboard 
+        - Aufzeigen der Historischen Daten 
+        --> Prompting unterschiede 
+        --> Claude Desing nutzen 
+
+        - Bug fixes 
+        - Code-rewiever 
+        - Git-deployment & Git comamnds
+        --> custom skills 
+        --> konnektoren 
+        --> agenten 
+
+        - Final desing 
+        - Darstellung Presentation 
+        - Presentationserstellung usw. 
+
+
+ 
