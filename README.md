@@ -20,7 +20,7 @@ Das Dashboard ist in drei Tabs gegliedert:
 - **Karte** – Interaktive Deutschlandkarte mit aktuellen Temperaturen
   ausgewählter Städte; Basis für eine spätere Heatmap.
 - **Klimaanalyse** – Historische Jahresmitteltemperaturen, gleitende
-  10-Jahres-Trends, Abweichung gegenüber der WMO-Referenzperiode 1961–1990 und
+  10-Jahres-Trends, Abweichung gegenüber der WMO-Referenzperiode 1961–2025 und
   eine Monats-Heatmap.
 
 ## Architektur
